@@ -1,0 +1,18 @@
+1. types/models.ts          ← everything depends on types
+2. utils/apiClient.ts       ← everything depends on HTTP client  
+3. utils/validators.ts      ← forms depend on schemas
+4. utils/formatCurrency.ts  ← display utils
+5. utils/formatDate.ts      ← display utils
+6. store/queryClient.ts     ← React Query setup
+7. store/AuthContext.tsx     ← auth state
+8. store/bookingFlowStore.ts ← booking wizard state
+9. store/uiStore.ts         ← toasts, modals
+10. api/ (all 9 files)      ← one by one
+11. hooks/ (all 7 files)    ← wrap the api files
+12. components/ui/          ← base components
+13. components/layout/      ← shells
+14. components/booking/     ← booking flow
+15. components/dashboard/   ← admin widgets
+16. router/                 ← routing + guards
+17. pages/                  ← assemble everything
+18. App.tsx + main.tsx      ← wire it all together
