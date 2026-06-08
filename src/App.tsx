@@ -2,7 +2,7 @@ import { RouterProvider } from 'react-router-dom';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './store/AuthContext';
 import { queryClient } from './store/queryClient';
-import { router } from './router';
+import { router } from './main';
 import { ToastContainer } from './components/ui/Toast';
 import './App.css';
 
