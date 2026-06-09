@@ -1,161 +1,22 @@
 import React from 'react';
-import { Outlet, Link, useNavigate } from 'react-router-dom';
+import { Outlet } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
-import { Button } from '../ui/Button';
 import { Navbar } from './Navbar'; 
+import '../../styles/layout/ClientLayout.css';
 
 interface ClientLayoutProps {
   children?: React.ReactNode;
 }
 
 export function ClientLayout({ children }: ClientLayoutProps) {
-  const { isAuthenticated, logout } = useAuth();
-  const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
 
   return (
     <>
-      <Navbar /> {/* Global Navbar always visible */}
-
-      <style>{`
-        /* Root */
-        .client-root {
-          min-height: 100vh;
-          display: flex;
-          flex-direction: column;
-          background: var(--cream);
-          padding-top: 64px; /* prevent content hiding behind fixed Navbar */
-        }
-
-        /* Navigation */
-        .client-nav {
-          background: var(--bg-card);
-          border-bottom: 1px solid var(--border);
-          position: sticky;
-          top: 64px; /* sits below global Navbar */
-          z-index: 40;
-        }
-        .client-nav-inner {
-          max-width: 1100px;
-          margin: 0 auto;
-          padding: 0 24px;
-          height: 64px;
-          display: flex;
-          align-items: center;
-          justify-content: space-between;
-        }
-        .client-nav-logo {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          text-decoration: none;
-        }
-        .client-nav-logo-mark {
-          width: 36px;
-          height: 36px;
-          background: var(--espresso);
-          border-radius: 8px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: var(--font-display);
-          font-size: 18px;
-          font-weight: 700;
-          color: var(--gold);
-        }
-        .client-nav-brand {
-          font-family: var(--font-display);
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: var(--espresso);
-          letter-spacing: 0.02em;
-        }
-        .client-nav-links {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .client-nav-link {
-          padding: 6px 14px;
-          text-decoration: none;
-          font-size: 13.5px;
-          font-weight: 400;
-          color: var(--text-secondary);
-          border-radius: var(--radius-md);
-          transition: all var(--transition);
-        }
-        .client-nav-link:hover {
-          background: var(--cream-mid);
-          color: var(--espresso);
-        }
-        .client-nav-link.active {
-          color: var(--gold-muted);
-          font-weight: 500;
-        }
-
-        /* Content */
-        .client-content {
-          flex: 1;
-          max-width: 1100px;
-          margin: 0 auto;
-          width: 100%;
-          padding: 0 24px;
-        }
-
-        /* Footer */
-        .client-footer {
-          margin-top: auto;
-          background: var(--espresso);
-          color: var(--sidebar-text);
-          text-align: center;
-          padding: 20px 24px;
-          font-size: 12px;
-          letter-spacing: 0.02em;
-        }
-        .client-footer a {
-          color: var(--gold-muted);
-        }
-        .client-footer a:hover {
-          color: var(--gold);
-        }
-
-        /* Responsive */
-        @media (max-width: 640px) {
-          .client-nav-brand { display: none; }
-          .client-nav-link span { display: none; }
-        }
-      `}</style>
+      {/* Global Navbar — switches between public and client */}
+      <Navbar variant={isAuthenticated ? 'client' : 'public'} />
 
       <div className="client-root">
-        {/* Client-specific Navigation */}
-        <nav className="client-nav">
-          <div className="client-nav-inner">
-            <Link to="/book" className="client-nav-logo">
-              <div className="client-nav-logo-mark">L</div>
-              <span className="client-nav-brand">Locs Allure</span>
-            </Link>
-
-            <div className="client-nav-links">
-              <Link to="/book" className="client-nav-link">Book Now</Link>
-              {isAuthenticated && (
-                <Link to="/my/bookings" className="client-nav-link">My Bookings</Link>
-              )}
-              {isAuthenticated ? (
-                <Button variant="ghost" size="sm" onClick={logout}>
-                  Sign Out
-                </Button>
-              ) : (
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate('/login')}
-                >
-                  Sign In
-                </Button>
-              )}
-            </div>
-          </div>
-        </nav>
-
         {/* Main Content */}
         <main className="client-content">
           {children ?? <Outlet />}

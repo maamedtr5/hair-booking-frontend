@@ -1,0 +1,51 @@
+/* StaffScheduleStyle.css */
+ 
+        .schedule-page { display: flex; flex-direction: column; gap: 20px; }
+        .schedule-header { margin-bottom: 4px; }
+        .schedule-title { font-family: var(--font-display); font-size: 1.8rem; font-weight: 600; color: var(--espresso); }
+        .schedule-sub { font-size: 13.5px; color: var(--text-muted); margin-top: 4px; }
+        .filter-row { display: flex; gap: 8px; }
+        .filter-tab {
+          padding: 6px 16px;
+          border: 1.5px solid var(--border);
+          border-radius: var(--radius-full);
+          font-size: 13px; font-weight: 400;
+          color: var(--text-secondary);
+          background: var(--bg-card); cursor: pointer;
+          transition: all var(--transition);
+        }
+        .filter-tab:hover { border-color: var(--gold-light); }
+        .filter-tab.active { background: var(--espresso); border-color: var(--espresso); color: var(--gold-light); font-weight: 500; }
+        .appt-list { display: flex; flex-direction: column; gap: 10px; }
+        .appt-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius-lg);
+          padding: 18px 20px;
+          transition: box-shadow var(--transition);
+        }
+        .appt-card:hover { box-shadow: var(--shadow-sm); }
+        .appt-card-top { display: flex; align-items: flex-start; gap: 14px; margin-bottom: 12px; }
+        .appt-icon {
+          width: 42px; height: 42px; border-radius: var(--radius-md);
+          background: var(--cream-mid);
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0; color: var(--bark);
+        }
+        .appt-service { font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: var(--espresso); margin-bottom: 3px; }
+        .appt-meta { font-size: 12.5px; color: var(--text-muted); }
+        .appt-price { font-family: var(--font-display); font-size: 1rem; font-weight: 600; color: var(--gold-muted); margin-left: auto; flex-shrink: 0; }
+        .appt-details {
+          display: grid; grid-template-columns: 1fr 1fr;
+          gap: 8px; margin-bottom: 14px;
+          padding: 12px; background: var(--cream);
+          border-radius: var(--radius-md);
+          font-size: 12.5px; color: var(--text-secondary);
+        }
+        .appt-detail-item { display: flex; align-items: center; gap: 6px; }
+        .appt-actions { display: flex; gap: 8px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--cream-mid); }
+        .empty { padding: 52px 24px; text-align: center; border: 1.5px dashed var(--border); border-radius: var(--radius-lg); }
+        .empty-icon { font-size: 32px; margin-bottom: 12px; }
+        .empty-title { font-family: var(--font-display); font-size: 1.1rem; color: var(--espresso); margin-bottom: 6px; }
+        .empty-sub { font-size: 13px; color: var(--text-muted); }
+     

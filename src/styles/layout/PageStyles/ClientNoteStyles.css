@@ -1,0 +1,43 @@
+/*ClientNoteStyleCss*/
+        .notes-page { display: flex; flex-direction: column; gap: 20px; }
+        .notes-back { display: flex; align-items: center; gap: 8px; color: var(--text-muted); font-size: 13.5px; text-decoration: none; margin-bottom: 4px; transition: color var(--transition); }
+        .notes-back:hover { color: var(--espresso); }
+        .client-card {
+          background: var(--bg-card); border: 1px solid var(--border);
+          border-radius: var(--radius-lg); padding: 22px;
+          display: flex; align-items: center; gap: 16px;
+        }
+        .client-avatar {
+          width: 56px; height: 56px; border-radius: 50%;
+          background: var(--espresso); border: 2px solid var(--gold-light);
+          display: flex; align-items: center; justify-content: center;
+          font-family: var(--font-display); font-size: 22px; font-weight: 600;
+          color: var(--gold-light); flex-shrink: 0;
+        }
+        .client-name { font-family: var(--font-display); font-size: 1.2rem; font-weight: 600; color: var(--espresso); }
+        .client-meta { font-size: 12.5px; color: var(--text-muted); margin-top: 3px; }
+        .section-card {
+          background: var(--bg-card); border: 1px solid var(--border);
+          border-radius: var(--radius-lg); overflow: hidden;
+        }
+        .section-header {
+          padding: 16px 20px 12px; border-bottom: 1px solid var(--border);
+          font-family: var(--font-display); font-size: 1rem;
+          font-weight: 600; color: var(--espresso);
+        }
+        .section-body { padding: 18px 20px; }
+        .notes-textarea {
+          width: 100%; min-height: 120px; padding: 12px 14px;
+          border: 1.5px solid var(--border); border-radius: var(--radius-md);
+          font-family: var(--font-body); font-size: 14px;
+          color: var(--espresso); resize: vertical; outline: none;
+          background: var(--bg-card); transition: border-color var(--transition);
+          margin-bottom: 12px;
+        }
+        .notes-textarea:focus { border-color: var(--gold); box-shadow: var(--shadow-gold); }
+        .field-label { font-size: 12px; font-weight: 500; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; display: block; margin-bottom: 6px; }
+        .appt-mini { padding: 12px 0; border-bottom: 1px solid var(--cream-mid); display: flex; align-items: center; gap: 12px; }
+        .appt-mini:last-child { border-bottom: none; }
+        .appt-mini-service { font-size: 13.5px; font-weight: 500; color: var(--espresso); flex: 1; }
+        .appt-mini-date { font-size: 12px; color: var(--text-muted); }
+     
