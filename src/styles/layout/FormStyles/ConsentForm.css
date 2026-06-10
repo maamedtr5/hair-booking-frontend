@@ -1,0 +1,151 @@
+/*consentform*/
+        .consent-form {
+          display: flex;
+          flex-direction: column;
+          gap: var(--space-5, 1.25rem);
+        }
+
+        .consent-form__intro {
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.9375rem;
+          color: var(--color-text-muted, #6b6052);
+          margin: 0;
+          line-height: 1.6;
+        }
+
+        .consent-form__required-star {
+          color: #dc2626;
+          font-weight: 600;
+        }
+
+        .consent-form__items {
+          display: flex;
+          flex-direction: column;
+          gap: 0.625rem;
+        }
+
+        .consent-item {
+          border: 1.5px solid var(--color-border, #e5e0d8);
+          border-radius: 12px;
+          padding: 1rem 1.125rem;
+          transition: border-color 0.15s ease, background 0.15s ease;
+        }
+
+        .consent-item--checked {
+          border-color: var(--color-gold, #c9a96e);
+          background: color-mix(in srgb, var(--color-gold, #c9a96e) 4%, var(--color-surface, #faf8f5));
+        }
+
+        .consent-item--error {
+          border-color: #dc2626;
+          background: color-mix(in srgb, #dc2626 4%, var(--color-surface, #faf8f5));
+        }
+
+        .consent-item__top {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 0.75rem;
+        }
+
+        .consent-item__label {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          cursor: pointer;
+          flex: 1;
+        }
+
+        .consent-item__checkbox-wrap {
+          position: relative;
+          flex-shrink: 0;
+        }
+
+        .consent-item__checkbox {
+          position: absolute;
+          opacity: 0;
+          width: 0;
+          height: 0;
+        }
+
+        .consent-item__checkbox-custom {
+          width: 20px;
+          height: 20px;
+          border-radius: 5px;
+          border: 1.5px solid var(--color-border, #d1ccc4);
+          background: var(--color-bg, #fff);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: all 0.15s ease;
+          color: #fff;
+        }
+
+        .consent-item--checked .consent-item__checkbox-custom {
+          background: var(--color-gold, #c9a96e);
+          border-color: var(--color-gold, #c9a96e);
+        }
+
+        .consent-item--error .consent-item__checkbox-custom {
+          border-color: #dc2626;
+        }
+
+        .consent-item__checkbox:focus-visible + .consent-item__checkbox-custom {
+          outline: 2px solid var(--color-gold, #c9a96e);
+          outline-offset: 2px;
+        }
+
+        .consent-item__label-text {
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.9375rem;
+          font-weight: 600;
+          color: var(--color-espresso, #2c1a0e);
+        }
+
+        .consent-item__expand-btn {
+          flex-shrink: 0;
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          background: transparent;
+          color: var(--color-text-muted, #9a8e82);
+          cursor: pointer;
+          border-radius: 6px;
+          transition: background 0.12s ease;
+        }
+
+        .consent-item__expand-btn:hover {
+          background: var(--color-border, #e5e0d8);
+        }
+
+        .consent-item__body {
+          margin: 0.75rem 0 0 2.375rem;
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.8125rem;
+          color: var(--color-text-muted, #6b6052);
+          line-height: 1.65;
+        }
+
+        .consent-item__error-msg {
+          margin: 0.375rem 0 0 2.375rem;
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.8rem;
+          color: #dc2626;
+          font-weight: 500;
+        }
+
+        .consent-form__global-error {
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.875rem;
+          color: #dc2626;
+          font-weight: 500;
+          margin: 0;
+        }
+
+        .consent-form__submit {
+          align-self: flex-start;
+        }
+    

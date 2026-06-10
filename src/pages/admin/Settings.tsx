@@ -3,7 +3,6 @@ import { Save, Plus, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import type { SubmitHandler } from 'react-hook-form';
 
 import apiClient from '../../utils/apiClient';
 import { Button } from '../../components/ui/Button';
@@ -12,18 +11,25 @@ import { Modal, ConfirmModal } from '../../components/ui/Modal';
 import { Badge } from '../../components/ui/Badge';
 import { PageSpinner } from '../../components/ui/Spinner';
 
-import { createPromoCodeSchema, type CreatePromoCodeFormValues } from '../../validators/promocodeValidator';
+import { z } from 'zod';
+import { createPromoCodeSchema } from '../../validators/promocodeValidator';
 import { toast } from '../../store/uiStore';
 import { getErrorMessage } from '../../utils/apiClient';
-
 import { formatGHS } from '../../utils/formatCurrency';
+
+// Output type from schema — isActive is boolean (not boolean | undefined)
+type CreatePromoCodeFormValues = z.infer<typeof createPromoCodeSchema>;
+
+// ── Types ──────────────────────────────────────────────────────────────────────
 
 type SettingsSectionProps = {
   title: string;
   children: React.ReactNode;
 };
 
-type CreatePromoCodeFormInput = Omit<CreatePromoCodeFormValues, 'isActive'> & { isActive?: boolean };
+type PromoRow = CreatePromoCodeFormValues & { id: number };
+
+// ── SettingsSection ────────────────────────────────────────────────────────────
 
 function SettingsSection({ title, children }: SettingsSectionProps) {
   return (
@@ -52,12 +58,15 @@ function SettingsSection({ title, children }: SettingsSectionProps) {
   );
 }
 
+// ── Settings page ──────────────────────────────────────────────────────────────
+
 export function Settings() {
   const qc = useQueryClient();
   const [promoOpen, setPromoOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
 
-  // ── Promo codes ──
+  // ── Promo codes ──────────────────────────────────────────────────────────────
+
   const { data: promos = [], isLoading: promosLoading } = useQuery({
     queryKey: ['promocodes'],
     queryFn: async () => {
@@ -99,13 +108,15 @@ export function Settings() {
     formState: { errors: promoErrors, isSubmitting: promoSubmitting },
   } = useForm<CreatePromoCodeFormValues>({ resolver: zodResolver(createPromoCodeSchema) });
 
-  const onCreatePromo: SubmitHandler<CreatePromoCodeFormValues> = (values) => {
-    createPromoMutation.mutate(values);
+  const closePromoModal = () => {
+    setPromoOpen(false);
+    resetPromo();
   };
+
+  // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
     <>
-      {/* Main layout */}
       <div className="settings-page animate-fade-up">
         {/* Header */}
         <div>
@@ -113,13 +124,14 @@ export function Settings() {
           <p className="page-sub">Configure business settings for Locs Allure</p>
         </div>
 
-        {/* Promo Codes Section */}
+        {/* Promo Codes */}
         <SettingsSection title="Promo Codes">
           <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
             <Button size="sm" icon={<Plus size={14} />} onClick={() => setPromoOpen(true)}>
               New Promo Code
             </Button>
           </div>
+
           {promosLoading ? (
             <PageSpinner message="Loading…" />
           ) : (
@@ -130,53 +142,63 @@ export function Settings() {
                   <th>Discount</th>
                   <th>Valid Until</th>
                   <th>Status</th>
-                  <th></th>
+                  <th />
                 </tr>
               </thead>
               <tbody>
                 {promos.length === 0 ? (
                   <tr>
-                    <td colSpan={5} style={{ textAlign: 'center', padding: '28px 0', fontStyle: 'italic', color: 'var(--text-muted)' }}>
+                    <td
+                      colSpan={5}
+                      style={{
+                        textAlign: 'center',
+                        padding: '28px 0',
+                        fontStyle: 'italic',
+                        color: 'var(--text-muted)',
+                      }}
+                    >
                       No promo codes yet
                     </td>
                   </tr>
                 ) : (
-                  promos.map((p: CreatePromoCodeFormValues & { id: number }) => (
-  <tr key={p.id}>
-    <td>
-      <span className="promo-code">{p.code}</span>
-      {p.description && (
-        <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{p.description}</div>
-      )}
-    </td>
-    <td>
-      {p.type === 'PERCENTAGE'
-        ? `${p.discount}% off`
-        : `${formatGHS(p.discount)} off`}
-    </td>
-    <td>{p.validUntil.split('T')[0]}</td>
-    <td>
-      <Badge variant={p.isActive ? 'green' : 'muted'} size="sm">
-        {p.isActive ? 'Active' : 'Inactive'}
-      </Badge>
-    </td>
-    <td>
-      <Button
-        variant="ghost"
-        size="sm"
-        icon={<Trash2 size={13} />}
-        onClick={() => setDeleteTarget(p.id)}
-      />
-    </td>
-  </tr>
-))
-                )}  
+                  promos.map((p: PromoRow) => (
+                    <tr key={p.id}>
+                      <td>
+                        <span className="promo-code">{p.code}</span>
+                        {p.description && (
+                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
+                            {p.description}
+                          </div>
+                        )}
+                      </td>
+                      <td>
+                        {p.type === 'PERCENTAGE'
+                          ? `${p.discount}% off`
+                          : `${formatGHS(p.discount)} off`}
+                      </td>
+                      <td>{p.validUntil ? p.validUntil.split('T')[0] : '—'}</td>
+                      <td>
+                        <Badge variant={p.isActive ? 'green' : 'muted'} size="sm">
+                          {p.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                      </td>
+                      <td>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          icon={<Trash2 size={13} />}
+                          onClick={() => setDeleteTarget(p.id)}
+                        />
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           )}
         </SettingsSection>
 
-        {/* Notification Preferences Section */}
+        {/* Notification Preferences */}
         <SettingsSection title="Notification Preferences">
           {[
             {
@@ -199,7 +221,7 @@ export function Settings() {
           ))}
         </SettingsSection>
 
-        {/* Business Information Section */}
+        {/* Business Information */}
         <SettingsSection title="Business Information">
           <div className="form-fields">
             <div className="form-row">
@@ -216,32 +238,25 @@ export function Settings() {
       {/* Create Promo Code Modal */}
       <Modal
         open={promoOpen}
-        onClose={() => {
-          setPromoOpen(false);
-          resetPromo();
-        }}
+        onClose={closePromoModal}
         title="Create Promo Code"
         size="sm"
         footer={
           <>
-            <Button variant="ghost" onClick={() => { setPromoOpen(false); resetPromo(); }}>
+            <Button variant="ghost" onClick={closePromoModal}>
               Cancel
             </Button>
-            <Button form="promo-form" type="submit" loading={promoSubmitting}>
+            <Button form="promo-form" type="submit" loading={promoSubmitting || createPromoMutation.isPending}>
               Create Code
             </Button>
           </>
         }
       >
-<form
-  id="promo-form"
-  onSubmit={handlePromoSubmit((values) => {
-    createPromoMutation.mutate(values);
-  })}
-  noValidate
->
-
-
+        <form
+          id="promo-form"
+          onSubmit={handlePromoSubmit((values) => createPromoMutation.mutate(values))}
+          noValidate
+        >
           <div className="form-fields">
             <Input
               label="Code"
@@ -289,11 +304,11 @@ export function Settings() {
         </form>
       </Modal>
 
-      {/* Delete Promo Code Confirmation Modal */}
+      {/* Delete Confirmation Modal */}
       <ConfirmModal
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
-        onConfirm={() => deleteTarget && deletePromoMutation.mutate(deleteTarget)}
+        onConfirm={() => deleteTarget !== null && deletePromoMutation.mutate(deleteTarget)}
         title="Delete Promo Code"
         message="This promo code will be permanently deleted and can no longer be used."
         confirmLabel="Delete"
@@ -304,17 +319,31 @@ export function Settings() {
   );
 }
 
+// ── NotificationToggle ─────────────────────────────────────────────────────────
+
 function NotificationToggle({ label, sub }: { label: string; sub?: string }) {
   const [enabled, setEnabled] = useState(true);
   return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
+    <div
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '10px 0',
+        borderBottom: '1px solid var(--border)',
+      }}
+    >
       <div>
         <div style={{ fontWeight: 600 }}>{label}</div>
         {sub && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub}</div>}
       </div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input type="checkbox" checked={enabled} onChange={() => setEnabled((s) => !s)} />
+        <input
+          type="checkbox"
+          checked={enabled}
+          onChange={() => setEnabled((s) => !s)}
+        />
       </label>
     </div>
   );
-}m
+}

@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useState } from 'react';
+import { useParams, Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Save, ArrowLeft } from 'lucide-react';
 import apiClient from '../../utils/apiClient';
@@ -10,19 +10,16 @@ import { formatDateTime } from '../../utils/formatDate';
 import { toast } from '../../store/uiStore';
 import { getErrorMessage } from '../../utils/apiClient';
 import type { Client, Appointment } from '../../types/models';
-import { Link } from 'react-router-dom';
-import '../../styles/PageStyles/ClientNoteStyles.css';
+import '../../styles/layout/PageStyles/ClientNoteStyles.css';
+
+// ── Loader shell ───────────────────────────────────────────────────────────────
+// Fetches data and renders a spinner until both client + appointments arrive,
+// then mounts <ClientNotesForm> once with stable initial values — no effects needed.
 
 export function ClientNotes() {
   const { clientId } = useParams<{ clientId: string }>();
   const id = Number(clientId);
-  const qc = useQueryClient();
 
-  // Notes and address state
-  const [notes, setNotes] = useState('');
-  const [address, setAddress] = useState('');
-
-  // Query for client
   const { data: client, isLoading: clientLoading } = useQuery<Client>({
     queryKey: ['clients', id],
     queryFn: async () => {
@@ -32,14 +29,6 @@ export function ClientNotes() {
     enabled: !!id,
   });
 
-  // Initialize address directly from client data (no useEffect needed)
-  React.useEffect(() => {
-    if (client?.address) {
-      setAddress(client.address);
-    }
-  }, [client?.address]);
-
-  // Query for appointments
   const { data: appointments = [], isLoading: apptsLoading } = useQuery<Appointment[]>({
     queryKey: ['appointments', 'client', id],
     queryFn: async () => {
@@ -49,7 +38,34 @@ export function ClientNotes() {
     enabled: !!id,
   });
 
-  // Mutation for saving notes/address
+  if (clientLoading || apptsLoading) return <PageSpinner message="Loading client…" />;
+
+  return (
+    <ClientNotesForm
+      id={id}
+      client={client ?? null}
+      appointments={appointments}
+    />
+  );
+}
+
+// ── Inner form ────────────────────────────────────────────────────────────────
+// Receives resolved data as props so useState initialisers run exactly once.
+// No effects, no refs, no cascading renders.
+
+interface ClientNotesFormProps {
+  id: number;
+  client: Client | null;
+  appointments: Appointment[];
+}
+
+function ClientNotesForm({ id, client, appointments }: ClientNotesFormProps) {
+  const qc = useQueryClient();
+
+  // Initialised from props on first mount — stable, no effect required
+  const [notes, setNotes] = useState<string>(client?.notes ?? '');
+  const [address, setAddress] = useState<string>(client?.address ?? '');
+
   const saveMutation = useMutation({
     mutationFn: async () => {
       const { data } = await apiClient.put(`/clients/${id}`, { address, notes });
@@ -61,8 +77,6 @@ export function ClientNotes() {
     },
     onError: (err) => toast.error(getErrorMessage(err)),
   });
-
-  if (clientLoading) return <PageSpinner message="Loading client…" />;
 
   return (
     <div className="notes-page animate-fade-up">
@@ -118,9 +132,7 @@ export function ClientNotes() {
       <div className="section-card">
         <div className="section-header">Appointment History ({appointments.length})</div>
         <div className="section-body">
-          {apptsLoading ? (
-            <PageSpinner message="Loading…" />
-          ) : appointments.length === 0 ? (
+          {appointments.length === 0 ? (
             <p style={{ fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>
               No appointments yet
             </p>

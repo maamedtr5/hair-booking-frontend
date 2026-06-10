@@ -1,0 +1,273 @@
+
+        .appt-table {
+          background: var(--color-surface, #faf8f5);
+          border: 1px solid var(--color-border, #e5e0d8);
+          border-radius: 14px;
+          overflow: hidden;
+        }
+
+        .appt-table__state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 3rem 1rem;
+          color: var(--color-text-muted, #9a8e82);
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+        }
+
+        .appt-table__toolbar {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 0.875rem;
+          padding: 1.125rem 1.5rem;
+          border-bottom: 1px solid var(--color-border, #e5e0d8);
+        }
+
+        .appt-table__search-wrap {
+          position: relative;
+          display: flex;
+          align-items: center;
+          flex: 1;
+          min-width: 200px;
+        }
+
+        .appt-table__search-wrap svg {
+          position: absolute;
+          left: 0.75rem;
+          color: var(--color-text-muted, #9ca3af);
+          pointer-events: none;
+        }
+
+        .appt-table__search {
+          width: 100%;
+          padding: 0.5rem 1rem 0.5rem 2.25rem;
+          background: var(--color-bg, #fff);
+          border: 1px solid var(--color-border, #e5e0d8);
+          border-radius: 8px;
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.875rem;
+          color: var(--color-text, #1a1108);
+          transition: border-color 0.15s ease;
+        }
+
+        .appt-table__search:focus {
+          outline: none;
+          border-color: var(--color-gold, #c9a96e);
+        }
+
+        .appt-table__filters {
+          display: flex;
+          gap: 0.25rem;
+          flex-wrap: wrap;
+        }
+
+        .appt-table__filter-btn {
+          padding: 0.375rem 0.75rem;
+          border-radius: 999px;
+          border: 1px solid var(--color-border, #e5e0d8);
+          background: transparent;
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.8rem;
+          font-weight: 500;
+          color: var(--color-text-muted, #6b6052);
+          cursor: pointer;
+          transition: all 0.15s ease;
+          white-space: nowrap;
+        }
+
+        .appt-table__filter-btn:hover {
+          border-color: var(--color-gold, #c9a96e);
+          color: var(--color-espresso, #2c1a0e);
+        }
+
+        .appt-table__filter-btn--active {
+          background: var(--color-espresso, #2c1a0e);
+          border-color: var(--color-espresso, #2c1a0e);
+          color: var(--color-cream, #faf8f5);
+        }
+
+        .appt-table__scroll {
+          overflow-x: auto;
+          -webkit-overflow-scrolling: touch;
+        }
+
+        .appt-table__empty {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 0.75rem;
+          padding: 3rem 1rem;
+          color: var(--color-text-muted, #9a8e82);
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.9375rem;
+        }
+
+        .appt-table__table {
+          width: 100%;
+          border-collapse: collapse;
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.875rem;
+        }
+
+        .appt-table__table thead {
+          background: color-mix(in srgb, var(--color-border, #e5e0d8) 35%, transparent);
+        }
+
+        .appt-table__table th {
+          padding: 0.75rem 1.25rem;
+          text-align: left;
+          font-size: 0.75rem;
+          font-weight: 600;
+          text-transform: uppercase;
+          letter-spacing: 0.06em;
+          color: var(--color-text-muted, #9a8e82);
+          white-space: nowrap;
+        }
+
+        .appt-table__row {
+          border-top: 1px solid var(--color-border, #e5e0d8);
+          transition: background 0.12s ease;
+        }
+
+        .appt-table__row:hover {
+          background: color-mix(in srgb, var(--color-gold, #c9a96e) 4%, var(--color-surface, #faf8f5));
+        }
+
+        .appt-table__cell {
+          padding: 0.875rem 1.25rem;
+          color: var(--color-text, #1a1108);
+          vertical-align: middle;
+          white-space: nowrap;
+        }
+
+        .appt-table__cell--client {
+          display: flex;
+          align-items: center;
+          gap: 0.625rem;
+          font-weight: 500;
+        }
+
+        .appt-table__client-avatar {
+          width: 28px;
+          height: 28px;
+          border-radius: 50%;
+          background: color-mix(in srgb, var(--color-gold, #c9a96e) 18%, var(--color-surface, #faf8f5));
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: var(--color-espresso, #2c1a0e);
+          flex-shrink: 0;
+          border: 1px solid var(--color-border, #e5e0d8);
+        }
+
+        .appt-table__cell--date {
+          display: flex;
+          flex-direction: column;
+          gap: 0.1rem;
+        }
+
+        .appt-table__time {
+          font-size: 0.75rem;
+          color: var(--color-text-muted, #9a8e82);
+        }
+
+        .appt-table__cell--actions {
+          padding: 0;
+          width: 48px;
+          text-align: center;
+        }
+
+        .appt-table__view-all {
+          padding: 0.875rem 1.5rem;
+          border-top: 1px solid var(--color-border, #e5e0d8);
+          display: flex;
+          justify-content: flex-end;
+        }
+
+        /* Row action menu */
+        .appt-table__actions {
+          position: relative;
+          display: inline-block;
+        }
+
+        .appt-table__action-trigger {
+          width: 32px;
+          height: 32px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border: none;
+          background: transparent;
+          border-radius: 6px;
+          color: var(--color-text-muted, #9a8e82);
+          cursor: pointer;
+          transition: background 0.12s ease, color 0.12s ease;
+        }
+
+        .appt-table__action-trigger:hover {
+          background: var(--color-border, #e5e0d8);
+          color: var(--color-espresso, #2c1a0e);
+        }
+
+        .appt-table__action-menu {
+          position: absolute;
+          right: 0;
+          top: calc(100% + 4px);
+          z-index: 50;
+          background: var(--color-surface, #faf8f5);
+          border: 1px solid var(--color-border, #e5e0d8);
+          border-radius: 10px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.12);
+          min-width: 168px;
+          overflow: hidden;
+          padding: 4px;
+        }
+
+        .appt-table__menu-item {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          width: 100%;
+          padding: 0.5rem 0.75rem;
+          border: none;
+          background: transparent;
+          border-radius: 6px;
+          font-family: var(--font-body, 'DM Sans', sans-serif);
+          font-size: 0.8125rem;
+          font-weight: 500;
+          color: var(--color-text, #1a1108);
+          cursor: pointer;
+          text-align: left;
+          transition: background 0.12s ease;
+        }
+
+        .appt-table__menu-item:hover {
+          background: color-mix(in srgb, var(--color-border, #e5e0d8) 60%, transparent);
+        }
+
+        .appt-table__menu-item--confirm { color: #16a34a; }
+        .appt-table__menu-item--complete { color: #2563eb; }
+        .appt-table__menu-item--danger { color: #dc2626; }
+
+        .sr-only {
+          position: absolute;
+          width: 1px;
+          height: 1px;
+          padding: 0;
+          margin: -1px;
+          overflow: hidden;
+          clip: rect(0,0,0,0);
+          white-space: nowrap;
+          border-width: 0;
+        }
+
+        @media (max-width: 768px) {
+          .appt-table__table th:nth-child(3),
+          .appt-table__table td:nth-child(3) {
+            display: none;
+          }
+        }
+      
