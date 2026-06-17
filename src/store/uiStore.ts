@@ -1,6 +1,5 @@
 import { create } from 'zustand';
 
-// ─── Toast ────────────────────────────────────────────────────────────────────
 
 export type ToastType = 'success' | 'error' | 'info' | 'warning';
 
@@ -11,7 +10,7 @@ export interface Toast {
   duration?: number; // ms — default 4000
 }
 
-// ─── Store shape ──────────────────────────────────────────────────────────────
+
 
 interface UiStore {
   // Toasts
@@ -30,7 +29,7 @@ interface UiStore {
 }
 
 export const useUiStore = create<UiStore>((set, get) => ({
-  // ── Toasts ──────────────────────────────────────────────────────────────────
+  
   toasts: [],
 
   addToast: ({ type, message, duration = 4000 }) => {
@@ -46,17 +45,17 @@ export const useUiStore = create<UiStore>((set, get) => ({
   removeToast: (id) =>
     set((state) => ({ toasts: state.toasts.filter((t) => t.id !== id) })),
 
-  // ── Sidebar ─────────────────────────────────────────────────────────────────
+
   sidebarOpen: true,
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
 
-  // ── Global loading ───────────────────────────────────────────────────────────
+
   globalLoading: false,
   setGlobalLoading: (loading) => set({ globalLoading: loading }),
 }));
 
-// ─── Convenience helpers (call these from React Query mutation callbacks) ──────
+
 
 export const toast = {
   success: (message: string) =>
@@ -68,3 +67,5 @@ export const toast = {
   warning: (message: string) =>
     useUiStore.getState().addToast({ type: 'warning', message }),
 };
+
+export const useUIStore = useUiStore;

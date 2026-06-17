@@ -5,7 +5,7 @@ import { useAppointments } from '../../hooks/useAppointments';
 import { useClients } from '../../hooks/useClients';
 import { useRevenueReport } from '../../hooks/useReports';
 import { useNotifications } from '../../hooks/useNotifications';
-import { useAuthContext } from '../../context/AuthContext';
+import { useAuthContext } from '../../store/AuthContext';
 import {
   StatsCard,
   RevenueIcon,
@@ -16,8 +16,8 @@ import {
 import { RevenueChart } from '../../components/dashboard/RevenueChart';
 import { AppointmentTable } from '../../components/dashboard/AppointmentTable';
 import { StatusBadge } from '../../components/ui/Badge';
-import type { Appointment } from '../../types';
-import '..styles/layout/BookingStyles/
+import type { Appointment } from '../../types/models';
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

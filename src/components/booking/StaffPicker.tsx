@@ -1,6 +1,6 @@
 // components/booking/StaffPicker.tsx
 import { useStaff } from '../../hooks/useStaff';
-import { useBookingFlowStore } from '../../stores/bookingFlowStore';
+import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import type { Staff } from '../../types';
 import  '..styles/layout/BookingStyles/StaffPicker.css'

@@ -1,7 +1,7 @@
 // components/booking/ServiceSelector.tsx
 import { useState, useMemo } from 'react';
 import { useServices } from '../../hooks/useServices';
-import { useBookingFlowStore } from '../../stores/bookingFlowStore';
+import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import { Badge } from '../ui/Badge';
 import type { Service } from '../../types';
@@ -41,7 +41,7 @@ function ServiceCard({ service, selected, onSelect }: ServiceCardProps) {
       <div className="service-card__header">
         <span className="service-card__name">{service.name}</span>
         {service.category && (
-          <Badge variant="neutral" size="sm">
+          <Badge variant="muted" size="sm">
             {service.category}
           </Badge>
         )}

@@ -1,18 +1,35 @@
+// App.tsx
 import { RouterProvider } from 'react-router-dom';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './store/AuthContext';
-import { queryClient } from './store/queryClient';
-import { router } from './main';
-import { ToastContainer } from './components/ui/Toast';
-import './App.css';
+import { createBrowserRouter} from 'react-router-dom';
+
+const router = createBrowserRouter([
+  {
+    path: '/',
+    element: <div>Home</div>,
+  },
+]);
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime:          1000 * 60 * 2,   // 2 minutes
+      gcTime:             1000 * 60 * 10,  // 10 minutes
+      retry:              1,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
 
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
         <RouterProvider router={router} />
-        {/* Global toast notifications — rendered outside router so they survive navigation */}
-        <ToastContainer />
       </AuthProvider>
     </QueryClientProvider>
   );

@@ -1,3 +1,4 @@
+// context/AuthContext.tsx
 import {
   createContext,
   useContext,
@@ -6,108 +7,110 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import { jwtDecode } from 'jwt-decode';
-import type { JwtPayload, Role } from '../types/models';
+import { login as apiLogin, register as apiRegister } from '../api/auth';
+import type { AuthUser, LoginPayload, RegisterPayload } from '../types';
 
-// ─── Context shape ────────────────────────────────────────────────────────────
+
 
 interface AuthContextValue {
-  user: JwtPayload | null;
-  token: string | null;
+  user: AuthUser | null;
   isAuthenticated: boolean;
-  isAdmin: boolean;
-  isStaff: boolean;
-  isClient: boolean;
-  login: (token: string) => void;
+  isLoading: boolean;
+  isInitializing: boolean;
+  login: (payload: LoginPayload) => Promise<void>;
+  register: (payload: RegisterPayload) => Promise<void>;
   logout: () => void;
-  hasRole: (role: Role) => boolean;
 }
+
+
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-// ─── Helper — safely decode token ────────────────────────────────────────────
 
-function decodeToken(token: string): JwtPayload | null {
+
+function loadStoredUser(): AuthUser | null {
   try {
-    const decoded = jwtDecode<JwtPayload>(token);
-    // Check token hasn't expired (exp is in seconds)
-    if (decoded.exp && decoded.exp * 1000 < Date.now()) {
-      return null;
-    }
-    return decoded;
+    const raw = localStorage.getItem('auth_user');
+    const token = localStorage.getItem('auth_token');
+    if (!raw || !token) return null;
+    return JSON.parse(raw) as AuthUser;
   } catch {
     return null;
   }
 }
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [token, setToken] = useState<string | null>(
-    () => localStorage.getItem('auth_token'),
-  );
-  const [user, setUser] = useState<JwtPayload | null>(() => {
-    const stored = localStorage.getItem('auth_token');
-    return stored ? decodeToken(stored) : null;
-  });
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true);
 
-  // If stored token is expired on mount, clear it
   useEffect(() => {
-    const stored = localStorage.getItem('auth_token');
-    if (stored && !decodeToken(stored)) {
-      localStorage.removeItem('auth_token');
-      setToken(null);
-      setUser(null);
-    }
+    setUser(loadStoredUser());
+    setIsInitializing(false);
   }, []);
 
-  const login = useCallback((newToken: string) => {
-    const decoded = decodeToken(newToken);
-    if (!decoded) {
-      console.error('Received invalid or expired token');
-      return;
-    }
-    localStorage.setItem('auth_token', newToken);
-    setToken(newToken);
-    setUser(decoded);
+  const persist = useCallback((authUser: AuthUser) => {
+    localStorage.setItem('auth_token', authUser.token);
+    localStorage.setItem('auth_user', JSON.stringify(authUser));
+    setUser(authUser);
   }, []);
+
+  const login = useCallback(
+    async (payload: LoginPayload) => {
+      setIsLoading(true);
+      try {
+        const response = await apiLogin(payload);
+        if (!response.user) throw new Error('Login response missing user data');
+        persist({ ...response.user, token: response.token });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [persist]
+  );
+
+  const register = useCallback(
+    async (payload: RegisterPayload) => {
+      setIsLoading(true);
+      try {
+        const response = await apiRegister(payload);
+        if (!response.user)
+          throw new Error('Register response missing user data');
+        persist({ ...response.user, token: response.token });
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [persist]
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem('auth_token');
-    setToken(null);
+    localStorage.removeItem('auth_user');
     setUser(null);
-    // Redirect to login — replace so the user can't go back
-    window.location.replace('/login');
   }, []);
 
-  const hasRole = useCallback(
-    (role: Role) => user?.role === role,
-    [user],
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        isAuthenticated: !!user,
+        isLoading,
+        isInitializing,
+        login,
+        register,
+        logout,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
   );
-
-  const value: AuthContextValue = {
-    user,
-    token,
-    isAuthenticated: !!user,
-    isAdmin: user?.role === 'ADMIN',
-    isStaff: user?.role === 'STAFF',
-    isClient: user?.role === 'CLIENT',
-    login,
-    logout,
-    hasRole,
-  };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
 
-export function useAuth(): AuthContextValue {
+
+export function useAuthContext(): AuthContextValue {
   const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth must be used inside <AuthProvider>');
-  }
+  if (!ctx) throw new Error('useAuthContext must be used inside <AuthProvider>');
   return ctx;
 }
-
-export { AuthContext };

@@ -6,11 +6,11 @@ import { useUpdateAppointment } from '../../hooks/useAppointments';
 import { StatusBadge } from '../ui/Badge';
 import { Spinner } from '../ui/Spinner';
 import { ConfirmModal } from '../ui/Modal';
-import { useUIStore } from '../../stores/uiStore';
+import { useUIStore } from '../../store/uiStore';
 import type { Appointment, AppointmentStatus } from '../../types';
 import './styles/layout/DashboardStyles/AppointmentTable.css'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GH', {
@@ -35,8 +35,6 @@ function formatGHS(value: number): string {
     minimumFractionDigits: 0,
   }).format(value);
 }
-
-// ─── Row actions menu ─────────────────────────────────────────────────────────
 
 interface RowActionsProps {
   appointment: Appointment;
@@ -101,9 +99,9 @@ function RowActions({ appointment, onConfirm, onComplete, onCancel, onView }: Ro
   );
 }
 
-// ─── Filter bar ───────────────────────────────────────────────────────────────
 
-const STATUS_FILTERS: { value: AppointmentStatus | 'ALL'; label: string }[] = [
+
+const STATUS_FILTERS: { value: AppointmentStatus | 'ALL' | 'NO_SHOW'; label: string }[] = [
   { value: 'ALL', label: 'All' },
   { value: 'PENDING', label: 'Pending' },
   { value: 'CONFIRMED', label: 'Confirmed' },
@@ -112,17 +110,16 @@ const STATUS_FILTERS: { value: AppointmentStatus | 'ALL'; label: string }[] = [
   { value: 'NO_SHOW', label: 'No-show' },
 ];
 
-// ─── Main component ───────────────────────────────────────────────────────────
 
 interface AppointmentTableProps {
-  /** Limit rows shown — for dashboard preview pass a small number, omit for full list */
   limit?: number;
 }
 
 export function AppointmentTable({ limit }: AppointmentTableProps) {
   const navigate = useNavigate();
   const { addToast } = useUIStore();
-  const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'ALL'>('ALL');
+  type AppointmentStatusFilter = AppointmentStatus | 'ALL' | 'NO_SHOW';
+  const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('ALL');
   const [search, setSearch] = useState('');
   const [pendingAction, setPendingAction] = useState<{
     id: number;
@@ -149,7 +146,7 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
 
   async function handleStatusChange(id: number, newStatus: AppointmentStatus) {
     try {
-      await updateMutation.mutateAsync({ id, data: { status: newStatus } });
+      await updateMutation.mutateAsync({ id, payload: { status: newStatus } });
       addToast({
         type: 'success',
         message: `Appointment ${newStatus.toLowerCase().replace('_', '-')}.`,
@@ -304,27 +301,30 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
         )}
       </div>
 
-      {/* Confirm action modal */}
-      {pendingAction && (
-        <ConfirmModal
-          isOpen
-          title={actionLabels[pendingAction.type].title}
-          message={actionLabels[pendingAction.type].body}
-          confirmLabel={
-            pendingAction.type === 'cancel'
-              ? 'Cancel appointment'
-              : pendingAction.type === 'confirm'
-              ? 'Confirm'
-              : 'Mark complete'
-          }
-          variant={pendingAction.type === 'cancel' ? 'danger' : 'primary'}
-          isLoading={updateMutation.isPending}
-          onConfirm={() =>
-            handleStatusChange(pendingAction.id, actionLabels[pendingAction.type].status)
-          }
-          onClose={() => setPendingAction(null)}
-        />
-      )}
+    {/* Confirm action modal */}
+{pendingAction && (
+  <ConfirmModal
+    open
+    title={actionLabels[pendingAction.type].title}
+    message={actionLabels[pendingAction.type].body}
+    confirmLabel={
+      pendingAction.type === 'cancel'
+        ? 'Cancel appointment'
+        : pendingAction.type === 'confirm'
+        ? 'Confirm'
+        : 'Mark complete'
+    }
+    danger={pendingAction.type === 'cancel'}
+    loading={updateMutation.isPending}
+    onConfirm={() =>
+      handleStatusChange(
+        pendingAction.id,
+        actionLabels[pendingAction.type].status
+      )
+    }
+    onClose={() => setPendingAction(null)}
+  />
+)}
 
     
     </>

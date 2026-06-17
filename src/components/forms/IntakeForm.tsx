@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useUpdateClient } from '../../hooks/useClients';
-import { useUIStore } from '../../stores/uiStore';
+import { useUIStore } from '../../store/uiStore';
 import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
 

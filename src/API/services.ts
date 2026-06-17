@@ -1,6 +1,6 @@
 import apiClient from '../utils/apiClient';
 import type { Service, ApiResponse } from '../types/models';
-import type { ServiceFormValues } from '../utils/validators';
+import type { ServiceFormValues } from '../validators/serviceValidator';
 
 /** GET /services */
 export async function getServices(): Promise<Service[]> {

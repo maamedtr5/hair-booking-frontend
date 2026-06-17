@@ -1,7 +1,7 @@
 // components/booking/SlotCalender.tsx
 import { useState, useMemo } from 'react';
 import { useAvailableSlots } from '../../hooks/useSlots';
-import { useBookingFlowStore } from '../../stores/bookingFlowStore';
+import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import type { Slot } from '../../types';
 

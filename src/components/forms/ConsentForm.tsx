@@ -1,6 +1,6 @@
 // components/forms/ConsentForm.tsx
 import { useState } from 'react';
-import { useBookingFlowStore } from '../../stores/bookingFlowStore';
+import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import './styles/layout/FormStyles/ConsentForm.css'
 interface ConsentItem {
   id: string;

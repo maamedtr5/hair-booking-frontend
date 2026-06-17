@@ -9,7 +9,7 @@ import { queryClient } from './store/queryClient'; // make sure this file export
 
 // Layouts
 import { AdminLayout } from './components/layout/AdminLayout';
-import { ClientLayout } from './components/layout/ClientLayout';
+import ClientLayout from './components/layout/ClientLayout';
 import { StaffLayout } from './components/layout/StaffLayout';
 
 // Auth pages
@@ -22,7 +22,7 @@ import { ConfirmationPage } from './pages/client/ConfirmationPage';
 import { MyBookings } from './pages/client/MyBookings';
 
 // Admin pages
-import { Dashboard } from './pages/admin/Dashboard';
+import Dashboard from './pages/admin/Dashboard';
 import { Calendar } from './pages/admin/Calendar';
 import { StaffPage } from './pages/admin/Staff';
 import { Reports } from './pages/admin/Reports';
@@ -37,12 +37,10 @@ export const router = createBrowserRouter([
   { path: '/login', element: <LoginPage /> },
   { path: '/register', element: <RegisterPage /> },
   {
-    path: '/book',
-    element: (
-      <ClientLayout>
-        <BookingPage />
-      </ClientLayout>
-    ),
+    element: <ClientLayout />,
+    children: [
+      { path: '/book', element: <BookingPage /> },
+    ],
   },
 
   // Client portal

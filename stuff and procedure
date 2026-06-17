@@ -16,3 +16,6 @@
 16. router/                 ← routing + guards
 17. pages/                  ← assemble everything
 18. App.tsx + main.tsx      ← wire it all together
+
+
+Worth confirming with your backend teammate that /users/login and /users/register actually return a user object alongside the token — the Postman collection's test script only checks for token.

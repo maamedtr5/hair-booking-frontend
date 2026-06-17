@@ -3,8 +3,8 @@ import * as appointmentsApi from '../api/appointments';
 import type { AppointmentStatus, CreateAppointmentPayload, ReschedulePayload } from '../types/models';
 import { toast } from '../store/uiStore';
 import { getErrorMessage } from '../utils/apiClient';
+import { useAuthContext } from '../store/AuthContext';
 
-// ─── Query keys ───────────────────────────────────────────────────────────────
 export const appointmentKeys = {
   all: ['appointments'] as const,
   byId: (id: number) => ['appointments', id] as const,
@@ -14,7 +14,7 @@ export const appointmentKeys = {
   byStatus: (status: AppointmentStatus) => ['appointments', 'status', status] as const,
 };
 
-// ─── Queries ──────────────────────────────────────────────────────────────────
+
 
 export function useAppointments() {
   return useQuery({
@@ -38,14 +38,19 @@ export function useAppointmentsByClient(clientId: number) {
     enabled: !!clientId,
   });
 }
+export function useMyAppointments() {
+  const { user } = useAuthContext();
+  return useAppointmentsByStaff(user?.staff?.id);
+}
 
-export function useAppointmentsByStaff(staffId: number) {
+export function useAppointmentsByStaff(staffId: number | undefined) {
   return useQuery({
-    queryKey: appointmentKeys.byStaff(staffId),
-    queryFn: () => appointmentsApi.getAppointmentsByStaff(staffId),
-    enabled: !!staffId,
+    queryKey: appointmentKeys.byStaff(staffId ?? 0),
+    queryFn: () => appointmentsApi.getAppointmentsByStaff(staffId!),
+    enabled: !!staffId, // only runs if staffId is truthy
   });
 }
+
 
 export function useAppointmentsByDate(date: string) {
   return useQuery({

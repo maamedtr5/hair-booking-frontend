@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as servicesApi from '../api/services';
-import type { ServiceFormValues } from '../utils/validators';
+import type { ServiceFormValues } from '../validators/serviceValidator';
 import { toast } from '../store/uiStore';
 import { getErrorMessage } from '../utils/apiClient';
 

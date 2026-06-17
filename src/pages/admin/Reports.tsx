@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import{ useState } from 'react';
 import { TrendingUp, Scissors, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getRevenueReport, getTopServices } from '../../api/reports';

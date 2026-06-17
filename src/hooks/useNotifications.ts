@@ -57,3 +57,12 @@ export function useMarkAllRead() {
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 }
+
+export function useDeleteNotification() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => notificationsApi.deleteNotification(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: notificationKeys.all }),
+    onError: (err) => toast.error(getErrorMessage(err)),
+  });
+}

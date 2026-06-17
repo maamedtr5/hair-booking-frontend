@@ -303,3 +303,7 @@ export interface BookingFlowState {
   appliedPromocode: Promocode | null;
   notes: string;
 }
+
+export interface AuthUser extends User {
+  token: string;
+}
