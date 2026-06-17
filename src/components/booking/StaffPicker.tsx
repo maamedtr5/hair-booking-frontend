@@ -11,29 +11,6 @@ interface StaffCardProps {
   onSelect: (staff: Staff) => void;
 }
 
-function StarRating({ value }: { value: number }) {
-  return (
-    <span className="staff-card__stars" aria-label={`Rating: ${value.toFixed(1)} out of 5`}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg
-          key={i}
-          width="12"
-          height="12"
-          viewBox="0 0 24 24"
-          fill={i < Math.round(value) ? 'currentColor' : 'none'}
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
-          className={i < Math.round(value) ? 'staff-card__star--filled' : 'staff-card__star--empty'}
-        >
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-        </svg>
-      ))}
-      <span className="staff-card__rating-value">{value.toFixed(1)}</span>
-    </span>
-  );
-}
-
 function StaffCard({ staff, selected, onSelect }: StaffCardProps) {
   const initials = staff.user?.name
     ? staff.user.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)
@@ -47,41 +24,31 @@ function StaffCard({ staff, selected, onSelect }: StaffCardProps) {
       className={`staff-card ${selected ? 'staff-card--selected' : ''}`}
     >
       <div className="staff-card__avatar" aria-hidden="true">
-        {staff.user?.avatarUrl ? (
-          <img src={staff.user.avatarUrl} alt={staff.user.name} className="staff-card__avatar-img" />
-        ) : (
-          <span className="staff-card__avatar-initials">{initials}</span>
-        )}
+        <span className="staff-card__avatar-initials">{initials}</span>
       </div>
 
       <div className="staff-card__info">
         <span className="staff-card__name">{staff.user?.name ?? 'Stylist'}</span>
 
-        {staff.specialties && staff.specialties.length > 0 && (
-          <div className="staff-card__specialties">
-            {staff.specialties.slice(0, 3).map((s: string) => (
-              <span key={s} className="staff-card__specialty-tag">{s}</span>
-            ))}
-            {staff.specialties.length > 3 && (
-              <span className="staff-card__specialty-tag staff-card__specialty-tag--more">
-                +{staff.specialties.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-
         {staff.bio && (
           <p className="staff-card__bio">{staff.bio}</p>
         )}
 
-        {typeof staff.averageRating === 'number' && (
-          <StarRating value={staff.averageRating} />
+        {staff.user?.email && (
+          <p className="staff-card__email">{staff.user.email}</p>
         )}
       </div>
 
       {selected && (
         <div className="staff-card__check" aria-hidden="true">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
             <polyline points="20 6 9 17 4 12" />
           </svg>
         </div>

@@ -1,21 +1,43 @@
-1. types/models.ts          ← everything depends on types
-2. utils/apiClient.ts       ← everything depends on HTTP client  
-3. utils/validators.ts      ← forms depend on schemas
-4. utils/formatCurrency.ts  ← display utils
-5. utils/formatDate.ts      ← display utils
-6. store/queryClient.ts     ← React Query setup
-7. store/AuthContext.tsx     ← auth state
-8. store/bookingFlowStore.ts ← booking wizard state
-9. store/uiStore.ts         ← toasts, modals
-10. api/ (all 9 files)      ← one by one
-11. hooks/ (all 7 files)    ← wrap the api files
-12. components/ui/          ← base components
-13. components/layout/      ← shells
-14. components/booking/     ← booking flow
-15. components/dashboard/   ← admin widgets
-16. router/                 ← routing + guards
-17. pages/                  ← assemble everything
-18. App.tsx + main.tsx      ← wire it all together
-
 
 Worth confirming with your backend teammate that /users/login and /users/register actually return a user object alongside the token — the Postman collection's test script only checks for token.
+
+Would you like me to also show you how to wire this into your frontend table pagination (so the UI buttons “Next Page” / “Previous Page” automatically send skip/take)?
+
+
+
+iles to Manually Edit
+
+
+src/pages/admin/Settings.tsx
+
+Fix enum usage: replace NO_SHOW with RESCHEDULED
+
+Ensure dropdowns or status checks only use: PENDING, CONFIRMED, RESCHEDULED, CANCELLED, COMPLETED
+
+src/pages/admin/Service.tsx (or wherever services are rendered)
+
+Remove: category
+
+Keep: name, duration, price
+
+src/pages/admin/Appointment.tsx
+
+Remove direct appointment.client
+
+Replace with nested access: appointment.booking?.client
+
+Update props passed to components accordingly
+
+src/pages/admin/Slot.tsx
+
+Replace: isAvailable → isBooked
+
+Any User UI components
+
+Remove: phone, avatarUrl
+
+If you need phone, fetch via booking.client.phone
+
+Any Client UI components
+
+Remove: notes, preferences (not in schema)

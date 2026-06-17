@@ -116,9 +116,7 @@ function CreateStaffModal({
           <div style={styles.formRow}>
             <Input label="Full name" placeholder="Ama Asante" error={errors.name?.message} {...register('name')} />
             <Input label="Email" type="email" placeholder="ama@example.com" error={errors.email?.message} {...register('email')} />
-          </div>
-          <Input label="Phone (optional)" type="tel" placeholder="+233 XX XXX XXXX" error={errors.phone?.message} {...register('phone')} />
-          <div>
+      
             <label style={styles.fieldLabel}>Bio (optional)</label>
             <textarea style={styles.bioTextarea} placeholder="Brief description of specialties and experience…" {...register('bio')} />
           </div>
