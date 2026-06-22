@@ -1,7 +1,8 @@
-// components/forms/ConsentForm.tsx
 import { useState } from 'react';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
-import './styles/layout/FormStyles/ConsentForm.css'
+import { useConsentForm } from '../../hooks/useConsentForm';
+import './styles/layout/FormStyles/ConsentForm.css';
+
 interface ConsentItem {
   id: string;
   required: boolean;
@@ -41,15 +42,16 @@ const CONSENT_ITEMS: ConsentItem[] = [
 ];
 
 interface ConsentFormProps {
+  clientId: number;
   onComplete?: (consents: Record<string, boolean>) => void;
 }
 
-export function ConsentForm({ onComplete }: ConsentFormProps) {
+export function ConsentForm({ clientId, onComplete }: ConsentFormProps) {
   const { consentData, setConsentData } = useBookingFlowStore();
+  const consentFormMutation = useConsentForm();
 
   const [checked, setChecked] = useState<Record<string, boolean>>(
-    consentData ??
-      Object.fromEntries(CONSENT_ITEMS.map((c) => [c.id, false]))
+    consentData ?? Object.fromEntries(CONSENT_ITEMS.map((c) => [c.id, false]))
   );
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [submitted, setSubmitted] = useState(false);
@@ -70,10 +72,21 @@ export function ConsentForm({ onComplete }: ConsentFormProps) {
     setExpanded((prev) => ({ ...prev, [id]: !prev[id] }));
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     setSubmitted(true);
     if (!allRequired) return;
-    onComplete?.(checked);
+
+    try {
+      await consentFormMutation.mutateAsync({
+        clientId,
+        consentGiven: true, // ✅ required consents accepted
+        signature: JSON.stringify(checked), // store all consents as JSON string
+      });
+
+      onComplete?.(checked);
+    } catch {
+      // handle error gracefully
+    }
   }
 
   return (
@@ -172,8 +185,6 @@ export function ConsentForm({ onComplete }: ConsentFormProps) {
       >
         Accept &amp; continue
       </button>
-
-      
     </div>
   );
 }

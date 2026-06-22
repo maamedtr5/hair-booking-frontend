@@ -154,13 +154,14 @@ export function SlotCalender() {
 
   const { selectedStaff, selectedSlot, setSlot } = useBookingFlowStore();
 
-  const { data: slots, isLoading } = useAvailableSlots({
-    staffId: selectedStaff?.id,
-    date: selectedDate?.toISOString().split('T')[0],
-  });
+const { data: slots, isLoading } = useAvailableSlots(
+  selectedStaff?.id ?? null,
+  selectedDate ? selectedDate.toISOString().split('T')[0] : null
+);
+
 
   const availableSlots: Slot[] = useMemo(
-    () => (slots ?? []).filter((s: Slot) => s.isAvailable),
+    () => (slots ?? []).filter((s: Slot) => !s.isBooked),
     [slots]
   );
 

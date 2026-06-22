@@ -8,8 +8,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  type TooltipProps,
 } from 'recharts';
+import type { ValueType, NameType, Payload} from 'recharts/types/component/DefaultTooltipContent';
+import type { TooltipProps} from 'recharts'
 import { useRevenueReport } from '../../hooks/useReports';
 import { Spinner } from '../ui/Spinner';
 import './styles/layout/DashboardStyles/RevenueChart.css'
@@ -54,12 +55,15 @@ function getPeriodDates(period: Period): { startDate: string; endDate: string } 
 }
 
 // Transform backend revenue report into chart-friendly data
-function transformReportData(data: any, period: Period): ChartDataPoint[] {
-  if (!data?.dailyRevenue && !data?.monthlyRevenue) return [];
 
-  const source: { date: string; revenue: number; bookings?: number }[] =
-    period === '12m' ? (data.monthlyRevenue ?? []) : (data.dailyRevenue ?? []);
+interface RevenueReportData {
+  dailyRevenue?: { date: string; revenue: number; bookings?: number }[];
+  monthlyRevenue?: { date: string; revenue: number; bookings?: number }[];
+}
 
+function transformReportData(data: RevenueReportData | undefined, period: Period): ChartDataPoint[] {
+  if (!data) return [];
+  const source = period === '12m' ? (data.monthlyRevenue ?? []) : (data.dailyRevenue ?? []);
   return source.map((item) => ({
     label:
       period === '12m'
@@ -71,16 +75,23 @@ function transformReportData(data: any, period: Period): ChartDataPoint[] {
 }
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
+function CustomTooltip(props: TooltipProps<ValueType, NameType>) {
+  const { active, payload, label } = props;
 
-function CustomTooltip({ active, payload, label }: TooltipProps<number, string>) {
-  if (!active || !payload?.length) return null;
-  const revenue = payload.find((p) => p.dataKey === 'revenue')?.value ?? 0;
-  const bookings = payload.find((p) => p.dataKey === 'bookings')?.value ?? 0;
+  if (!active || !payload || payload.length === 0) return null;
+
+  const revenue =
+    (payload.find((p: Payload<ValueType, NameType>) => p.dataKey === 'revenue')?.value as number) ?? 0;
+  const bookings =
+    (payload.find((p: Payload<ValueType, NameType>) => p.dataKey === 'bookings')?.value as number) ?? 0;
+
   return (
     <div className="rev-chart__tooltip">
       <p className="rev-chart__tooltip-label">{label}</p>
-      <p className="rev-chart__tooltip-revenue">{formatGHS(revenue as number)}</p>
-      <p className="rev-chart__tooltip-bookings">{bookings} booking{bookings !== 1 ? 's' : ''}</p>
+      <p className="rev-chart__tooltip-revenue">{formatGHS(revenue)}</p>
+      <p className="rev-chart__tooltip-bookings">
+        {bookings} booking{bookings !== 1 ? 's' : ''}
+      </p>
     </div>
   );
 }
@@ -100,7 +111,10 @@ export function RevenueChart() {
 
   const { data, isLoading, isError } = useRevenueReport({ startDate, endDate });
 
-  const chartData = useMemo(() => transformReportData(data, period), [data, period]);
+  const chartData = useMemo(
+    () => transformReportData(data as RevenueReportData | undefined, period),
+    [data, period]
+  );
 
   const totalRevenue: number = useMemo(
     () => chartData.reduce((sum, d) => sum + d.revenue, 0),

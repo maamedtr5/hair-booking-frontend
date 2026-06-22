@@ -1,5 +1,5 @@
 
-Worth confirming with your backend teammate that /users/login and /users/register actually return a user object alongside the token — the Postman collection's test script only checks for token.
+
 
 Would you like me to also show you how to wire this into your frontend table pagination (so the UI buttons “Next Page” / “Previous Page” automatically send skip/take)?
 

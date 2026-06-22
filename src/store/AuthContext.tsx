@@ -1,53 +1,31 @@
-// context/AuthContext.tsx
 import {
   createContext,
-  useContext,
   useState,
-  useEffect,
   useCallback,
   type ReactNode,
 } from 'react';
 import { login as apiLogin, register as apiRegister } from '../api/auth';
+import * as usersApi from '../api/users';
+import { loadStoredUser } from '../utils/authStorage';
 import type { AuthUser, LoginPayload, RegisterPayload } from '../types';
-
-
 
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitializing: boolean;
-  login: (payload: LoginPayload) => Promise<void>;
-  register: (payload: RegisterPayload) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<AuthUser>;
+  register: (payload: RegisterPayload) => Promise<AuthUser>;
   logout: () => void;
 }
 
-
-
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-
-
-function loadStoredUser(): AuthUser | null {
-  try {
-    const raw = localStorage.getItem('auth_user');
-    const token = localStorage.getItem('auth_token');
-    if (!raw || !token) return null;
-    return JSON.parse(raw) as AuthUser;
-  } catch {
-    return null;
-  }
-}
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
+  // ✅ initialize directly instead of setState in useEffect
+  const [user, setUser] = useState<AuthUser | null>(() => loadStoredUser());
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true);
-
-  useEffect(() => {
-    setUser(loadStoredUser());
-    setIsInitializing(false);
-  }, []);
+  const [isInitializing] = useState(false);
 
   const persist = useCallback((authUser: AuthUser) => {
     localStorage.setItem('auth_token', authUser.token);
@@ -56,12 +34,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = useCallback(
-    async (payload: LoginPayload) => {
+    async (payload: LoginPayload): Promise<AuthUser> => {
       setIsLoading(true);
       try {
         const response = await apiLogin(payload);
-        if (!response.user) throw new Error('Login response missing user data');
-        persist({ ...response.user, token: response.token });
+
+        if (response.user) {
+          const authUser = { ...response.user, token: response.token };
+          persist(authUser);
+          return authUser;
+        } else {
+          // ✅ fallback: fetch user profile
+          const fetchedUser = await usersApi.getMe();
+          const authUser = { ...fetchedUser, token: response.token };
+          persist(authUser);
+          return authUser;
+        }
       } finally {
         setIsLoading(false);
       }
@@ -70,13 +58,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   const register = useCallback(
-    async (payload: RegisterPayload) => {
+    async (payload: RegisterPayload): Promise<AuthUser> => {
       setIsLoading(true);
       try {
         const response = await apiRegister(payload);
-        if (!response.user)
-          throw new Error('Register response missing user data');
-        persist({ ...response.user, token: response.token });
+
+        if (response.user) {
+          const authUser = { ...response.user, token: response.token };
+          persist(authUser);
+          return authUser;
+        } else {
+          const fetchedUser = await usersApi.getMe();
+          const authUser = { ...fetchedUser, token: response.token };
+          persist(authUser);
+          return authUser;
+        }
       } finally {
         setIsLoading(false);
       }
@@ -107,10 +103,5 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-
-
-export function useAuthContext(): AuthContextValue {
-  const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuthContext must be used inside <AuthProvider>');
-  return ctx;
-}
+export type { AuthContextValue };
+export { AuthContext };

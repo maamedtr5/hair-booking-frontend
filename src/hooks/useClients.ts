@@ -27,3 +27,10 @@ export function useDeleteClient() {
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
+export function useClientByUserId(userId: number | undefined) {
+  return useQuery({
+    queryKey: [KEY, 'byUser', userId],
+    queryFn: () => clientsApi.getClientByUserId(userId!),
+    enabled: !!userId,
+  });
+}

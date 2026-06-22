@@ -1,43 +1,13 @@
-import { useEffect, useState } from 'react';
+import { useNotifications } from './useNotifications';
+import type { AppNotification } from '../types/models';
 
 /**
- * Custom hook to fetch unread notifications count for a user.
+ * Custom hook to compute unread notifications count for a user.
  * @param userId number - the current user's ID
  * @returns number - unread notifications count
  */
 export function useUnreadCount(userId: number) {
-  const [count, setCount] = useState(0);
+  const { data: notifications } = useNotifications(userId);
 
-  useEffect(() => {
-    // If no userId, just leave count at 0
-    if (!userId) return;
-
-    let cancelled = false;
-
-    async function fetchUnread() {
-      try {
-        // Replace with your actual API endpoint
-        const res = await fetch(`/api/notifications/unread-count?userId=${userId}`);
-        if (!res.ok) throw new Error('Failed to fetch unread count');
-        const data = await res.json();
-
-        if (!cancelled) {
-          setCount(data.count ?? 0);
-        }
-      } catch (err) {
-        console.error('Error fetching unread count:', err);
-        if (!cancelled) {
-          setCount(0);
-        }
-      }
-    }
-
-    fetchUnread();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
-
-  return count;
+  return notifications?.filter((n: AppNotification) => !n.read).length ?? 0;
 }

@@ -31,3 +31,7 @@ export async function updateClient(
 export async function deleteClient(id: number): Promise<void> {
   await apiClient.delete(`/clients/${id}`);
 }
+export async function getClientByUserId(userId: number) {
+  const { data } = await apiClient.get(`/clients/user/${userId}`);
+  return data.data ?? data;
+}

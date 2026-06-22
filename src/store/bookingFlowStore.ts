@@ -1,3 +1,4 @@
+// src/store/bookingFlowStore.ts
 import { create } from 'zustand';
 import type { BookingFlowState, Service, Staff, Slot, Promocode } from '../types/models';
 
@@ -15,6 +16,9 @@ interface BookingFlowStore extends BookingFlowState {
   setPromocode: (promo: Promocode | null) => void;
   setNotes: (notes: string) => void;
 
+  // Consent form data
+  setConsentData: (data: Record<string, boolean> | null) => void;
+
   // Reset entire flow (after successful booking or on cancel)
   reset: () => void;
 }
@@ -27,6 +31,7 @@ const initialState: BookingFlowState = {
   selectedDate: null,
   appliedPromocode: null,
   notes: '',
+  consentData: null, // ✅ new field
 };
 
 export const useBookingFlowStore = create<BookingFlowStore>((set, get) => ({
@@ -72,6 +77,8 @@ export const useBookingFlowStore = create<BookingFlowStore>((set, get) => ({
   setPromocode: (promo) => set({ appliedPromocode: promo }),
 
   setNotes: (notes) => set({ notes }),
+
+  setConsentData: (data) => set({ consentData: data }), // ✅ new setter
 
   reset: () => set(initialState),
 }));

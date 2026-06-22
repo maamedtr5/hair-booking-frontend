@@ -13,7 +13,6 @@ function formatDate(iso: string) {
 
 function ClientDetailModal({ client, onClose }: { client: Client; onClose: () => void }) {
   const [tab, setTab] = useState<'profile' | 'intake' | 'history'>('profile');
-  const prefs = client.preferences as Record<string, string> | null;
 
   return (
     <Modal open title={client.user?.name ?? 'Client'} onClose={onClose} size="lg">
@@ -21,8 +20,14 @@ function ClientDetailModal({ client, onClose }: { client: Client; onClose: () =>
         {/* Tabs */}
         <div className="cl-detail__tabs" role="tablist">
           {(['profile', 'intake', 'history'] as const).map((t) => (
-            <button key={t} type="button" role="tab" aria-selected={tab === t} onClick={() => setTab(t)}
-              className={`cl-detail__tab ${tab === t ? 'cl-detail__tab--active' : ''}`}>
+            <button
+              key={t}
+              type="button"
+              role="tab"
+              aria-selected={tab === t}
+              onClick={() => setTab(t)}
+              className={`cl-detail__tab ${tab === t ? 'cl-detail__tab--active' : ''}`}
+            >
               {t.charAt(0).toUpperCase() + t.slice(1)}
             </button>
           ))}
@@ -31,34 +36,29 @@ function ClientDetailModal({ client, onClose }: { client: Client; onClose: () =>
         {tab === 'profile' && (
           <div className="cl-detail__section">
             <div className="cl-detail__row"><span className="cl-detail__key">Email</span><span>{client.user?.email ?? '—'}</span></div>
-            <div className="cl-detail__row"><span className="cl-detail__key">Phone</span><span>{client.user?.phone ?? '—'}</span></div>
+            <div className="cl-detail__row"><span className="cl-detail__key">Phone</span><span>{client.phone ?? '—'}</span></div>
             <div className="cl-detail__row"><span className="cl-detail__key">Member since</span><span>{client.createdAt ? formatDate(client.createdAt) : '—'}</span></div>
-            {prefs?.hairType && <div className="cl-detail__row"><span className="cl-detail__key">Hair type</span><span>{prefs.hairType}</span></div>}
-            {prefs?.scalpCondition && <div className="cl-detail__row"><span className="cl-detail__key">Scalp</span><span>{prefs.scalpCondition}</span></div>}
-            {client.notes && (
-              <div className="cl-detail__notes">
-                <span className="cl-detail__key">Notes</span>
-                <p>{client.notes}</p>
-              </div>
-            )}
           </div>
         )}
 
         {tab === 'intake' && (
-          <IntakeForm clientId={client.id} defaultValues={prefs as any} onSuccess={onClose} />
+          <IntakeForm clientId={client.id} defaultValues={{}} onSuccess={onClose} />
         )}
 
         {tab === 'history' && (
           <div className="cl-detail__history">
-            {(!client.appointments || client.appointments.length === 0) ? (
+            {(!client.bookings || client.bookings.length === 0) ? (
               <p className="cl-detail__empty">No appointment history.</p>
-            ) : client.appointments.map((a: any) => (
-              <div key={a.id} className="cl-detail__hist-row">
-                <span className="cl-detail__hist-service">{a.service?.name ?? '—'}</span>
-                <span className="cl-detail__hist-date">{formatDate(a.date)}</span>
-                <span className={`cl-detail__hist-status cl-detail__hist-status--${a.status.toLowerCase()}`}>{a.status}</span>
-              </div>
-            ))}
+            ) : client.bookings
+                ?.map((b) => b.appointment)
+                .filter(Boolean)
+                .map((a) => (
+                  <div key={a!.id} className="cl-detail__hist-row">
+                    <span className="cl-detail__hist-service">{a!.service?.name ?? '—'}</span>
+                    <span className="cl-detail__hist-date">{formatDate(a!.date)}</span>
+                    <span className={`cl-detail__hist-status cl-detail__hist-status--${a!.status.toLowerCase()}`}>{a!.status}</span>
+                  </div>
+                ))}
           </div>
         )}
       </div>
@@ -82,7 +82,7 @@ export default function ClientsPage() {
     return clients.filter((c: Client) =>
       c.user?.name?.toLowerCase().includes(q) ||
       c.user?.email?.toLowerCase().includes(q) ||
-      c.user?.phone?.includes(q)
+      c.phone?.includes(q)
     );
   }, [clients, search]);
 
@@ -108,7 +108,14 @@ export default function ClientsPage() {
 
       <div className="cl-page__search-wrap">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-        <input type="search" placeholder="Search by name, email or phone…" value={search} onChange={(e) => setSearch(e.target.value)} className="cl-page__search" aria-label="Search clients" />
+        <input
+          type="search"
+          placeholder="Search by name, email or phone…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="cl-page__search"
+          aria-label="Search clients"
+        />
       </div>
 
       {isLoading ? (
@@ -119,19 +126,22 @@ export default function ClientsPage() {
             <p className="cl-page__empty">No clients found.</p>
           ) : filtered.map((c: Client) => {
             const initials = c.user?.name?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) ?? '?';
-            const prefs = c.preferences as Record<string, string> | null;
             return (
               <div key={c.id} className="cl-card">
                 <div className="cl-card__avatar">{initials}</div>
                 <div className="cl-card__info">
                   <div className="cl-card__name">{c.user?.name ?? '—'}</div>
                   <div className="cl-card__email">{c.user?.email ?? '—'}</div>
-                  {c.user?.phone && <div className="cl-card__phone">{c.user.phone}</div>}
-                  {prefs?.hairType && <span className="cl-card__tag">{prefs.hairType}</span>}
+                  {c.phone && <div className="cl-card__phone">{c.phone}</div>}
                 </div>
                 <div className="cl-card__actions">
                   <button type="button" onClick={() => setViewClient(c)} className="btn btn--ghost btn--sm">View</button>
-                  <button type="button" onClick={() => setDeleteTarget(c.id)} className="btn btn--ghost btn--sm cl-card__del-btn" aria-label="Delete client">
+                  <button
+                    type="button"
+                    onClick={() => setDeleteTarget(c.id)}
+                    className="btn btn--ghost btn--sm cl-card__del-btn"
+                    aria-label="Delete client"
+                  >
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg>
                   </button>
                 </div>
@@ -142,26 +152,24 @@ export default function ClientsPage() {
       )}
 
       {viewClient && (
-  <ClientDetailModal
-    client={viewClient}
-    onClose={() => setViewClient(null)}
-  />
-)}
+        <ClientDetailModal
+          client={viewClient}
+          onClose={() => setViewClient(null)}
+        />
+      )}
 
-{deleteTarget && (
-  <ConfirmModal
-    open
-    title="Remove client"
-    message="This will permanently delete the client and all associated data."
-    confirmLabel="Delete client"
-    danger
-    loading={deleteMutation.isPending}
-    onConfirm={handleDelete}
-    onClose={() => setDeleteTarget(null)}
-  />
-)}
-
-
+      {deleteTarget && (
+        <ConfirmModal
+          open
+          title="Remove client"
+          message="This will permanently delete the client and all associated data."
+          confirmLabel="Delete client"
+          danger
+          loading={deleteMutation.isPending}
+          onConfirm={handleDelete}
+          onClose={() => setDeleteTarget(null)}
+        />
+      )}
       <style>{`
         .cl-page { display:flex;flex-direction:column;gap:1.5rem;padding:1.75rem 2rem;max-width:1400px;margin:0 auto; }
         .cl-page__header { display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem; }
@@ -212,3 +220,5 @@ export default function ClientsPage() {
     </div>
   );
 }
+   
+  

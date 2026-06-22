@@ -5,7 +5,7 @@ import { useAppointments } from '../../hooks/useAppointments';
 import { useClients } from '../../hooks/useClients';
 import { useRevenueReport } from '../../hooks/useReports';
 import { useNotifications } from '../../hooks/useNotifications';
-import { useAuthContext } from '../../store/AuthContext';
+import { useAuthContext } from '../../hooks/useAuth'
 import {
   StatsCard,
   RevenueIcon,
@@ -16,7 +16,7 @@ import {
 import { RevenueChart } from '../../components/dashboard/RevenueChart';
 import { AppointmentTable } from '../../components/dashboard/AppointmentTable';
 import { StatusBadge } from '../../components/ui/Badge';
-import type { Appointment } from '../../types/models';
+import type { Appointment, AppNotification } from '../../types/models';
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -101,11 +101,11 @@ function TodayRow({ appt }: { appt: Appointment }) {
       type="button"
       onClick={() => navigate(`/admin/appointments/${appt.id}`)}
       className="today-row"
-      aria-label={`View appointment for ${appt.client?.user?.name ?? 'client'}`}
+      aria-label={`View appointment for ${appt.booking?.client?.user?.name ?? 'client'}`}
     >
       <div className="today-row__time">{formatTime(appt.date)}</div>
       <div className="today-row__info">
-        <span className="today-row__client">{appt.client?.user?.name ?? '—'}</span>
+        <span className="today-row__client">{appt.booking?.client?.user?.name ?? '—'}</span>
         <span className="today-row__service">{appt.service?.name ?? '—'}</span>
       </div>
       <div className="today-row__staff">{appt.staff?.user?.name ?? 'Unassigned'}</div>
@@ -186,7 +186,7 @@ export default function Dashboard() {
     startDate: sixtyAgo,
     endDate: thirtyAgo,
   });
-  const { data: notifications } = useNotifications();
+ const { data: notifications } = useNotifications(user?.id ?? 0);
 
   // ── Derived metrics ──
 
@@ -219,9 +219,9 @@ export default function Dashboard() {
   const currentClients = clients?.length ?? 0;
 
   const unreadCount = useMemo(
-    () => (notifications ?? []).filter((n: any) => !n.isRead).length,
-    [notifications]
-  );
+  () => (notifications ?? []).filter((n: AppNotification) => !n.read).length,
+  [notifications]
+);
 
   const greeting = useMemo(() => {
     const h = new Date().getHours();

@@ -2,7 +2,7 @@
 import apiClient from '../utils/apiClient';
 import type { Settings } from '../types';
 
-export const SettingssApi = {
+export const SettingsApi = {
   getAll: async (): Promise<Settings[]> => {
     const { data } = await apiClient.get('/Settingss');
     return data.data ?? data;

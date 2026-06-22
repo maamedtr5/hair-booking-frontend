@@ -1,7 +1,7 @@
 
 export type Role = 'ADMIN' | 'STAFF' | 'CLIENT';
 
-export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
+export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'| 'RESCHEDULED';
 
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
@@ -63,6 +63,8 @@ export interface Client {
   bookings?: Booking[];
   reviews?: Review[];
   waitlists?: Waitlist[];
+  forms?: Form[];
+  preferences?: Record<string, unknown>;
 }
 
 export interface Staff {
@@ -85,6 +87,7 @@ export interface Service {
   createdAt: string;
   updatedAt: string;
 }
+
 
 export interface Appointment {
   id: number;
@@ -302,8 +305,19 @@ export interface BookingFlowState {
   selectedDate: string | null; // YYYY-MM-DD
   appliedPromocode: Promocode | null;
   notes: string;
+  consentData: Record<string, boolean> | null;
+}
+export interface AppNotification {
+  id: number;
+  message: string;
+  read: boolean;
+  createdAt: string;
 }
 
 export interface AuthUser extends User {
   token: string;
+   // Relations
+  admin?: Admin | null;
+  client?: Client | null;  
+  staff?: Staff | null;
 }

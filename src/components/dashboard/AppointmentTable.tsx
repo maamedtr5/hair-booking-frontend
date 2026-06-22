@@ -48,7 +48,7 @@ function RowActions({ appointment, onConfirm, onComplete, onCancel, onView }: Ro
   const [open, setOpen] = useState(false);
   const isPending = appointment.status === 'PENDING';
   const isConfirmed = appointment.status === 'CONFIRMED';
-  const isFinal = ['CANCELLED', 'COMPLETED', 'NO_SHOW'].includes(appointment.status);
+  const isFinal = ['CANCELLED', 'COMPLETED', 'RESCHEDULED'].includes(appointment.status);
 
   return (
     <div className="appt-table__actions" onBlur={(e) => {
@@ -101,13 +101,13 @@ function RowActions({ appointment, onConfirm, onComplete, onCancel, onView }: Ro
 
 
 
-const STATUS_FILTERS: { value: AppointmentStatus | 'ALL' | 'NO_SHOW'; label: string }[] = [
+const STATUS_FILTERS: { value: AppointmentStatus | 'ALL' ; label: string }[] = [
   { value: 'ALL', label: 'All' },
   { value: 'PENDING', label: 'Pending' },
   { value: 'CONFIRMED', label: 'Confirmed' },
   { value: 'COMPLETED', label: 'Completed' },
   { value: 'CANCELLED', label: 'Cancelled' },
-  { value: 'NO_SHOW', label: 'No-show' },
+  { value: 'RESCHEDULED', label: 'Rescheduled' },
 ];
 
 
@@ -118,7 +118,7 @@ interface AppointmentTableProps {
 export function AppointmentTable({ limit }: AppointmentTableProps) {
   const navigate = useNavigate();
   const { addToast } = useUIStore();
-  type AppointmentStatusFilter = AppointmentStatus | 'ALL' | 'NO_SHOW';
+  type AppointmentStatusFilter = AppointmentStatus | 'ALL' |'RESCHEDULED';
   const [statusFilter, setStatusFilter] = useState<AppointmentStatusFilter>('ALL');
   const [search, setSearch] = useState('');
   const [pendingAction, setPendingAction] = useState<{
@@ -132,16 +132,17 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
   const filtered = useMemo(() => {
     if (!appointments) return [];
     return appointments
-      .filter((a: Appointment) => {
-        const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
-        const matchSearch =
-          !search ||
-          a.client?.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
-          a.service?.name?.toLowerCase().includes(search.toLowerCase()) ||
-          a.staff?.user?.name?.toLowerCase().includes(search.toLowerCase());
-        return matchStatus && matchSearch;
-      })
-      .slice(0, limit ?? appointments.length);
+  .filter((a: Appointment) => {
+  const matchStatus = statusFilter === 'ALL' || a.status === statusFilter;
+  const matchSearch =
+    !search ||
+    a.booking?.client?.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    a.service?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    a.staff?.user?.name?.toLowerCase().includes(search.toLowerCase());
+  return matchStatus && matchSearch;
+})
+.slice(0, limit ?? appointments.length);
+
   }, [appointments, statusFilter, search, limit]);
 
   async function handleStatusChange(id: number, newStatus: AppointmentStatus) {
@@ -256,9 +257,9 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
                   <tr key={appt.id} className="appt-table__row">
                     <td className="appt-table__cell appt-table__cell--client">
                       <span className="appt-table__client-avatar" aria-hidden="true">
-                        {appt.client?.user?.name?.charAt(0)?.toUpperCase() ?? '?'}
+                        {appt.booking?.user?.name?.charAt(0)?.toUpperCase() ?? '?'}
                       </span>
-                      <span>{appt.client?.user?.name ?? '—'}</span>
+                      <span>{appt.booking?.user?.name ?? '—'}</span>
                     </td>
                     <td className="appt-table__cell">{appt.service?.name ?? '—'}</td>
                     <td className="appt-table__cell">{appt.staff?.user?.name ?? 'Unassigned'}</td>

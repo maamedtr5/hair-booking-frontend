@@ -1,24 +1,23 @@
-
 import apiClient from '../utils/apiClient';
-import type { Notification, ApiResponse } from '../types/models';
+import type { ApiResponse, AppNotification } from '../types/models';
 
 /** GET /notifications/user/:userId */
-export async function getNotificationsByUser(userId: number): Promise<Notification[]> {
-  const { data } = await apiClient.get<ApiResponse<Notification[]>>(
+export async function getNotificationsByUser(userId: number): Promise<AppNotification[]> {
+  const { data } = await apiClient.get<ApiResponse<AppNotification[]>>(
     `/notifications/user/${userId}`,
   );
   return data.data ?? [];
 }
 
 /** GET /notifications */
-export async function getAllNotifications(): Promise<Notification[]> {
-  const { data } = await apiClient.get<ApiResponse<Notification[]>>('/notifications');
+export async function getAllNotifications(): Promise<AppNotification[]> {
+  const { data } = await apiClient.get<ApiResponse<AppNotification[]>>('/notifications');
   return data.data ?? [];
 }
 
 /** PUT /notifications/:id — mark single notification read */
-export async function markNotificationRead(id: number): Promise<Notification> {
-  const { data } = await apiClient.put<ApiResponse<Notification>>(
+export async function markNotificationRead(id: number): Promise<AppNotification> {
+  const { data } = await apiClient.put<ApiResponse<AppNotification>>(
     `/notifications/${id}`,
     { isRead: true },
   );

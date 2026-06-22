@@ -1,13 +1,13 @@
 // pages/staff/StaffDashboard.tsx
-import { useMemo } from 'react';
+import { useMemo, useContext,useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../store/AuthContext';
-import {useAppointmentsByStaff, useUpdateAppointment,useMyAppointments } from '../../hooks/useAppointments';
- import { useNotifications } from '../../hooks/useNotifications';
+import { AuthContext } from '../../store/AuthContext';
+import { useUpdateAppointment,useMyAppointments } from '../../hooks/useAppointments';
+import { useNotifications } from '../../hooks/useNotifications';
 import { StatusBadge } from '../../components/ui/Badge';
 import { Spinner } from '../../components/ui/Spinner';
 import { useUIStore } from '../../store/uiStore';
-import type { Appointment } from '../../types';
+import type { AppNotification, Appointment, AppointmentStatus } from '../../types/models';
 
 
 function formatGHS(n: number) {
@@ -33,20 +33,21 @@ function isToday(iso: string) { return iso.startsWith(todayStr()); }
 function isUpcoming(iso: string) { return new Date(iso) > new Date(); }
 
 // ─── Today appointment row ────────────────────────────────────────────────────
-
 function TodayAppointmentRow({
   appt,
   onComplete,
-  onNoShow,
+  onReschedule,
 }: {
   appt: Appointment;
   onComplete: (id: number) => void;
-  onNoShow: (id: number) => void;
+  onReschedule: (id: number) => void;
 }) {
+ const [now] = useState(() => Date.now());
+
   const isPending   = appt.status === 'PENDING';
   const isConfirmed = appt.status === 'CONFIRMED';
-  const isFinal     = ['COMPLETED', 'CANCELLED', 'NO_SHOW'].includes(appt.status);
-  const isNow       = Math.abs(new Date(appt.date).getTime() - Date.now()) < 30 * 60 * 1000;
+  const isFinal     = ['COMPLETED', 'CANCELLED', 'RESCHEDULED'].includes(appt.status);
+  const isNow       = Math.abs(new Date(appt.date).getTime() - now) < 30 * 60 * 1000;
 
   return (
     <div className={`staff-today__row ${isNow ? 'staff-today__row--now' : ''}`}>
@@ -58,14 +59,22 @@ function TodayAppointmentRow({
       </div>
 
       <div className="staff-today__info">
-        <span className="staff-today__client">{appt.client?.user?.name ?? '—'}</span>
-        <span className="staff-today__service">{appt.service?.name ?? '—'}</span>
-        {appt.client?.user?.phone && (
-          <a href={`tel:${appt.client.user.phone}`} className="staff-today__phone">
-            {appt.client.user.phone}
-          </a>
-        )}
-      </div>
+  <span className="staff-today__client">
+    {appt.booking?.client?.user?.name ?? '—'}
+  </span>
+  <span className="staff-today__service">
+    {appt.service?.name ?? '—'}
+  </span>
+  {appt.booking?.client?.phone && (
+    <a
+      href={`tel:${appt.booking.client?.phone}`}
+      className="staff-today__phone"
+    >
+      {appt.booking.client?.phone}
+    </a>
+  )}
+</div>
+
 
       <div className="staff-today__right">
         <StatusBadge status={appt.status} />
@@ -74,7 +83,7 @@ function TodayAppointmentRow({
             <button type="button" onClick={() => onComplete(appt.id)} className="btn btn--sm staff-today__complete-btn">
               Complete
             </button>
-            <button type="button" onClick={() => onNoShow(appt.id)} className="btn btn--ghost btn--sm">
+            <button type="button" onClick={() => onReschedule(appt.id)} className="btn btn--ghost btn--sm">
               No-show
             </button>
           </div>
@@ -99,12 +108,13 @@ function MiniStat({ label, value, accent }: { label: string; value: string | num
 
 export default function StaffDashboard() {
   const navigate    = useNavigate();
-  const { user }    = useAuthContext();
+  const  auth    = useContext(AuthContext);
+  const user = auth?.user;
   const { addToast } = useUIStore();
 
   const { data: appointments, isLoading } = useMyAppointments();
   const updateMutation = useUpdateAppointment();
-  const { data: notifications } =useNotifications(user?.id ?? 0);
+  const { data: notifications } = useNotifications(user?.id ?? 0);
 
   const todayAppts = useMemo(
     () => (appointments ?? [])
@@ -121,29 +131,46 @@ export default function StaffDashboard() {
     [appointments]
   );
 
-  const weekRevenue = useMemo(() => {
-    const weekAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
-    return (appointments ?? [])
-      .filter((a: Appointment) => a.status === 'COMPLETED' && new Date(a.date).getTime() > weekAgo)
-      .reduce((sum: number, a: Appointment) => sum + (a.service?.price ?? 0), 0);
-  }, [appointments]);
+// capture "now" once per render
+ const [now] = useState(() => Date.now());
+const weekAgo = now - 7 * 24 * 60 * 60 * 1000;
 
-  const completedToday = todayAppts.filter((a: Appointment) => a.status === 'COMPLETED').length;
-  const unreadCount = (notifications ?? []).filter((n: any) => !n.isRead).length;
+const weekRevenue = useMemo(() => {
+  return (appointments ?? [])
+    .filter(
+      (a: Appointment) =>
+        a.status === 'COMPLETED' && new Date(a.date).getTime() > weekAgo
+    )
+    .reduce((sum: number, a: Appointment) => sum + (a.service?.price ?? 0), 0);
+}, [appointments, weekAgo]);
 
-  const greeting = (() => {
-    const h = new Date().getHours();
-    return h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
-  })();
+const completedToday = todayAppts.filter(
+  (a: Appointment) => a.status === 'COMPLETED'
+).length;
 
-  async function handleStatusChange(id: number, status: 'COMPLETED' | 'NO_SHOW') {
-    try {
-      await updateMutation.mutateAsync({ id, payload: { status: status as unknown as Appointment['status'] } });
-      addToast({ type: 'success', message: `Appointment marked as ${status === 'COMPLETED' ? 'completed' : 'no-show'}.` });
-    } catch {
-      addToast({ type: 'error', message: 'Update failed.' });
-    }
+const unreadCount = (notifications as AppNotification[] ?? []).filter((n) => !n.read).length;
+
+const greeting = useMemo(() => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+}, []);
+
+async function handleStatusChange(id: number, status: AppointmentStatus) {
+  try {
+    await updateMutation.mutateAsync({ id, payload: { status } });
+    addToast({
+      type: 'success',
+      message: `Appointment marked as ${
+        status === 'COMPLETED' ? 'completed' : 'rescheduled'
+      }.`,
+    });
+  } catch {
+    addToast({ type: 'error', message: 'Update failed.' });
   }
+}
+
 
   return (
     <div className="staff-dash">
@@ -189,8 +216,8 @@ export default function StaffDashboard() {
               <TodayAppointmentRow
                 key={a.id}
                 appt={a}
-                onComplete={(id) => handleStatusChange(id, 'COMPLETED')}
-                onNoShow={(id) => handleStatusChange(id, 'NO_SHOW')}
+                onComplete={(id: number) => handleStatusChange(id, 'COMPLETED')}
+                onReschedule={(id: number) => handleStatusChange(id, 'RESCHEDULED')}
               />
             ))}
           </div>
@@ -206,21 +233,26 @@ export default function StaffDashboard() {
               See all →
             </button>
           </div>
-          <div className="staff-upcoming">
-            {upcomingAppts.map((a: Appointment) => (
-              <div key={a.id} className="staff-upcoming__row">
-                <div className="staff-upcoming__date-col">
-                  <span className="staff-upcoming__date">{formatDate(a.date)}</span>
-                  <span className="staff-upcoming__time">{formatTime(a.date)}</span>
-                </div>
-                <div className="staff-upcoming__info">
-                  <span className="staff-upcoming__client">{a.client?.user?.name ?? '—'}</span>
-                  <span className="staff-upcoming__service">{a.service?.name ?? '—'}</span>
-                </div>
-                <StatusBadge status={a.status} />
-              </div>
-            ))}
-          </div>
+      <div className="staff-upcoming">
+  {upcomingAppts.map((a: Appointment) => (
+    <div key={a.id} className="staff-upcoming__row">
+      <div className="staff-upcoming__date-col">
+        <span className="staff-upcoming__date">{formatDate(a.date)}</span>
+        <span className="staff-upcoming__time">{formatTime(a.date)}</span>
+      </div>
+      <div className="staff-upcoming__info">
+        <span className="staff-upcoming__client">
+          {a.booking?.client?.user?.name ?? '—'}
+        </span>
+        <span className="staff-upcoming__service">
+          {a.service?.name ?? '—'}
+        </span>
+      </div>
+      <StatusBadge status={a.status} />
+    </div>
+  ))}
+</div>
+
         </section>
       )}
 

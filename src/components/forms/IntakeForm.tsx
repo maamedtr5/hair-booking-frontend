@@ -2,10 +2,11 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useUpdateClient } from '../../hooks/useClients';
 import { useUIStore } from '../../store/uiStore';
 import { Input } from '../ui/Input';
 import { Spinner } from '../ui/Spinner';
+
+import { useIntakeForm } from '../../hooks/useIntakeForm';
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -14,11 +15,12 @@ const SCALP_CONDITIONS = ['Normal', 'Dry', 'Oily', 'Sensitive', 'Dandruff', 'Alo
 const PRODUCT_PREFS = ['No preference', 'Natural/organic only', 'Fragrance-free', 'No sulphates', 'No parabens'] as const;
 const VISIT_REASONS = ['Protective style', 'Special occasion', 'Regular maintenance', 'Treatment', 'First visit', 'Other'] as const;
 
+
 const intakeSchema = z.object({
-  hairType: z.enum(HAIR_TYPES, { required_error: 'Please select your hair type.' }),
-  scalpCondition: z.enum(SCALP_CONDITIONS, { required_error: 'Please select your scalp condition.' }),
+  hairType: z.enum(HAIR_TYPES, { error: 'Please select your hair type.' }),
+  scalpCondition: z.enum(SCALP_CONDITIONS, { error: 'Please select your scalp condition.' }),
   productPreference: z.enum(PRODUCT_PREFS),
-  visitReason: z.enum(VISIT_REASONS, { required_error: 'Please select a reason for your visit.' }),
+  visitReason: z.enum(VISIT_REASONS, { error: 'Please select a reason for your visit.' }),
   lastChemicalTreatment: z.string().optional(),
   allergies: z.string().max(500, 'Please keep this under 500 characters.').optional(),
   currentProducts: z.string().max(500).optional(),
@@ -100,14 +102,13 @@ function TextareaField({ label, name, placeholder, hint, register, error, rows =
 
 interface IntakeFormProps {
   clientId: number;
-  /** Pre-fill from existing client preferences */
   defaultValues?: Partial<IntakeFormValues>;
   onSuccess?: () => void;
 }
 
 export function IntakeForm({ clientId, defaultValues, onSuccess }: IntakeFormProps) {
   const { addToast } = useUIStore();
-  const updateClient = useUpdateClient();
+ const intakeFormMutation = useIntakeForm();
 
   const {
     register,
@@ -118,34 +119,29 @@ export function IntakeForm({ clientId, defaultValues, onSuccess }: IntakeFormPro
     defaultValues: defaultValues ?? {},
   });
 
-  async function onSubmit(values: IntakeFormValues) {
-    try {
-      await updateClient.mutateAsync({
-        id: clientId,
-        data: {
-          preferences: {
-            hairType: values.hairType,
-            scalpCondition: values.scalpCondition,
-            productPreference: values.productPreference,
-            visitReason: values.visitReason,
-            lastChemicalTreatment: values.lastChemicalTreatment,
-            currentProducts: values.currentProducts,
-            goals: values.goals,
-          },
-          notes: [
-            values.allergies ? `Allergies/sensitivities: ${values.allergies}` : null,
-            values.notes ? `Notes: ${values.notes}` : null,
-          ]
-            .filter(Boolean)
-            .join('\n'),
-        },
-      });
-      addToast({ type: 'success', message: 'Intake form saved.' });
-      onSuccess?.();
-    } catch {
-      addToast({ type: 'error', message: 'Failed to save intake form. Please try again.' });
-    }
+async function onSubmit(values: IntakeFormValues) {
+  try {
+    await intakeFormMutation.mutateAsync({
+      clientId,
+      hairType: values.hairType,
+      scalpCondition: values.scalpCondition,
+      productPreference: values.productPreference,
+      visitReason: values.visitReason,
+      lastChemicalTreatment: values.lastChemicalTreatment
+        ? new Date(values.lastChemicalTreatment)
+        : undefined,
+      currentProducts: values.currentProducts,
+      goals: values.goals,
+      allergies: values.allergies,
+      notes: values.notes,
+    });
+    addToast({ type: 'success', message: 'Intake form saved.' });
+    onSuccess?.();
+  } catch {
+    addToast({ type: 'error', message: 'Failed to save intake form.' });
   }
+}
+
 
   return (
     <form
@@ -243,7 +239,7 @@ export function IntakeForm({ clientId, defaultValues, onSuccess }: IntakeFormPro
         <TextareaField
           label="Additional notes for your stylist"
           name="notes"
-          placeholder="Anything else we should know before your appointment…"
+          placeholder = "Anything else we should know before your appointment…"
           register={register}
           error={errors.notes?.message}
           rows={4}
@@ -266,8 +262,6 @@ export function IntakeForm({ clientId, defaultValues, onSuccess }: IntakeFormPro
           )}
         </button>
       </div>
-
-      
     </form>
   );
 }

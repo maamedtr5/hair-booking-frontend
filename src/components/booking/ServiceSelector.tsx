@@ -3,11 +3,8 @@ import { useState, useMemo } from 'react';
 import { useServices } from '../../hooks/useServices';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
-import { Badge } from '../ui/Badge';
 import type { Service } from '../../types';
-import '..styles/layout/BookingStyles/ServiceSelector.css'
-
-const CATEGORIES = ['All', 'Braiding', 'Natural Hair', 'Weaving', 'Loc Services', 'Treatments'];
+import '../styles/layout/BookingStyles/ServiceSelector.css';
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('en-GH', {
@@ -40,11 +37,6 @@ function ServiceCard({ service, selected, onSelect }: ServiceCardProps) {
     >
       <div className="service-card__header">
         <span className="service-card__name">{service.name}</span>
-        {service.category && (
-          <Badge variant="muted" size="sm">
-            {service.category}
-          </Badge>
-        )}
       </div>
 
       {service.description && (
@@ -76,27 +68,16 @@ function ServiceCard({ service, selected, onSelect }: ServiceCardProps) {
 export function ServiceSelector() {
   const { data: services, isLoading, isError } = useServices();
   const { selectedService, setService } = useBookingFlowStore();
-  const [activeCategory, setActiveCategory] = useState('All');
   const [search, setSearch] = useState('');
 
   const filtered = useMemo(() => {
     if (!services) return [];
-    return services.filter((s) => {
-      const matchesCategory =
-        activeCategory === 'All' || s.category === activeCategory;
-      const matchesSearch =
-        !search ||
-        s.name.toLowerCase().includes(search.toLowerCase()) ||
-        s.description?.toLowerCase().includes(search.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [services, activeCategory, search]);
-
-  const availableCategories = useMemo(() => {
-    if (!services) return CATEGORIES;
-    const found = new Set(services.map((s) => s.category).filter(Boolean));
-    return ['All', ...CATEGORIES.slice(1).filter((c) => found.has(c))];
-  }, [services]);
+    return services.filter((s) =>
+      !search ||
+      s.name.toLowerCase().includes(search.toLowerCase()) ||
+      s.description?.toLowerCase().includes(search.toLowerCase())
+    );
+  }, [services, search]);
 
   if (isLoading) {
     return (
@@ -132,21 +113,6 @@ export function ServiceSelector() {
             className="service-selector__search-input"
           />
         </div>
-
-        <div className="service-selector__categories" role="tablist" aria-label="Filter by category">
-          {availableCategories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              role="tab"
-              aria-selected={activeCategory === cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`service-selector__cat-btn ${activeCategory === cat ? 'service-selector__cat-btn--active' : ''}`}
-            >
-              {cat}
-            </button>
-          ))}
-        </div>
       </div>
 
       {filtered.length === 0 ? (
@@ -154,7 +120,7 @@ export function ServiceSelector() {
           <p>No services match your search.</p>
           <button
             type="button"
-            onClick={() => { setSearch(''); setActiveCategory('All'); }}
+            onClick={() => setSearch('')}
             className="btn btn--ghost btn--sm"
           >
             Clear filters

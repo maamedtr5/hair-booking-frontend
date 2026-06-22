@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as notificationsApi from '../api/notifications';
 import { toast } from '../store/uiStore';
 import { getErrorMessage } from '../utils/apiClient';
+import type { AppNotification } from '../types/models';
 
 export const notificationKeys = {
   all: ['notifications'] as const,
@@ -10,18 +11,18 @@ export const notificationKeys = {
 
 /** Fetch notifications for the current user — polls every 30 seconds */
 export function useNotifications(userId: number) {
-  return useQuery({
+  return useQuery<AppNotification[]>({
     queryKey: notificationKeys.byUser(userId),
     queryFn: () => notificationsApi.getNotificationsByUser(userId),
     enabled: !!userId,
-    refetchInterval: 30_000, // Poll every 30 seconds for new notifications
+    refetchInterval: 30_000,
     staleTime: 15_000,
   });
 }
 
 export function useUnreadCount(userId: number) {
   const { data: notifications } = useNotifications(userId);
-  return notifications?.filter((n) => !n.read).length ?? 0;
+  return notifications?.filter((n: AppNotification) => !n.read).length ?? 0;
 }
 
 export function useMarkRead() {
