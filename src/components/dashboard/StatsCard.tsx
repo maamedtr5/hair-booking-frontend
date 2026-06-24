@@ -2,7 +2,7 @@
 import type { ReactNode } from 'react';
 
 type TrendDirection = 'up' | 'down' | 'neutral';
-import './styles/layout/DashboardStyles/StatsCard.css'
+import '../../styles/layout/DashboardStyles/StatsCard.css'
 
 interface StatsCardProps {
   title: string;

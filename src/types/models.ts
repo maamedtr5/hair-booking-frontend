@@ -1,7 +1,14 @@
+// src/types/models.ts
 
+// ===== Enums =====
 export type Role = 'ADMIN' | 'STAFF' | 'CLIENT';
 
-export type AppointmentStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED'| 'RESCHEDULED';
+export type AppointmentStatus =
+  | 'PENDING'
+  | 'CONFIRMED'
+  | 'COMPLETED'
+  | 'CANCELLED'
+  | 'RESCHEDULED';
 
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
@@ -13,26 +20,35 @@ export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
 
 export type DiscountType = 'PERCENTAGE' | 'FIXED';
 
-export type NotificationType = 'GENERAL' | 'APPOINTMENT' | 'PAYMENT' | 'PROMOTION' | 'SYSTEM';
+export type NotificationType =
+  | 'GENERAL'
+  | 'APPOINTMENT'
+  | 'PAYMENT'
+  | 'PROMOTION'
+  | 'SYSTEM';
 
 export type NotificationStatus = 'QUEUED' | 'SENT' | 'DELIVERED' | 'FAILED';
 
 export type WaitlistStatus = 'PENDING' | 'NOTIFIED' | 'BOOKED' | 'CANCELLED';
 
-
+// ===== Core Models =====
 export interface User {
   id: number;
   name: string;
   email: string;
   role: Role;
-  // Google Calendar — only present if connected
   googleAccessToken?: string | null;
   googleRefreshToken?: string | null;
   googleTokenExpiry?: string | null;
-  // Relations (may be included depending on endpoint)
   admin?: Admin | null;
   client?: Client | null;
   staff?: Staff | null;
+}
+export interface AuthUser extends User {
+  token: string;
+  admin?: Admin | null;
+  client?: Client | null;
+  staffId?: number| null;
 }
 
 export interface JwtPayload {
@@ -62,9 +78,8 @@ export interface Client {
   user?: User;
   bookings?: Booking[];
   reviews?: Review[];
-  waitlists?: Waitlist[];
   forms?: Form[];
-  preferences?: Record<string, unknown>;
+  waitlists?: Waitlist[];
 }
 
 export interface Staff {
@@ -81,26 +96,24 @@ export interface Service {
   id: number;
   name: string;
   description?: string | null;
-  duration: number; // minutes
-  price: number;   // GHS
+  duration: number;
+  price: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
 
-
 export interface Appointment {
   id: number;
   serviceId: number;
   staffId?: number | null;
-  date: string; // ISO string
+  date: string;
   status: AppointmentStatus;
   notes?: string | null;
   reminderScheduled: boolean;
   reminderSent: boolean;
   reminderSentAt?: string | null;
   googleEventId?: string | null;
-  // Relations
   service?: Service;
   staff?: Staff;
   booking?: Booking | null;
@@ -110,8 +123,8 @@ export interface Appointment {
 export interface Slot {
   id: number;
   appointmentId: number;
-  startTime: string; // ISO string
-  endTime: string;   // ISO string
+  startTime: string;
+  endTime: string;
   isBooked: boolean;
   appointment?: Appointment;
 }
@@ -125,7 +138,6 @@ export interface Booking {
   status: BookingStatus;
   createdAt: string;
   updatedAt: string;
-  // Relations
   appointment?: Appointment;
   client?: Client;
   user?: User;
@@ -138,7 +150,7 @@ export interface Payment {
   id: number;
   bookingId: number;
   amount: number;
-  currency: string; // 'GHS'
+  currency: string;
   method: PaymentMethod;
   provider: PaymentProvider;
   status: PaymentStatus;
@@ -156,7 +168,7 @@ export interface Review {
   clientId: number;
   serviceId?: number | null;
   staffId?: number | null;
-  rating: number; // 1–5
+  rating: number;
   comment?: string | null;
   createdAt: string;
   client?: Client;
@@ -180,7 +192,7 @@ export interface Form {
   clientId: number;
   bookingId?: number | null;
   title: string;
-  fields: Record<string, unknown>; // flexible JSON
+  fields: Record<string, unknown>;
   createdAt: string;
   updatedAt: string;
 }
@@ -188,7 +200,7 @@ export interface Form {
 export interface Settings {
   id: number;
   key: string;
-  value: Record<string, unknown>; // flexible JSON
+  value: Record<string, unknown>;
   description?: string | null;
   updatedAt: string;
 }
@@ -216,6 +228,17 @@ export interface Notification {
   user?: User;
 }
 
+export interface AppNotification {
+  id: number;
+  userId: number;
+  message: string;
+  type: NotificationType;
+  status: NotificationStatus;
+  read: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface Report {
   id: number;
   title: string;
@@ -223,12 +246,11 @@ export interface Report {
   createdAt: string;
 }
 
-
+// ===== API Responses =====
 export interface ApiResponse<T> {
   success: boolean;
   message?: string;
   data?: T;
-  // Some endpoints return the resource directly at top level
   token?: string;
   error?: string;
 }
@@ -239,8 +261,15 @@ export interface PaginatedResponse<T> {
   total?: number;
   page?: number;
   limit?: number;
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
+// ===== Payloads =====
 export interface LoginPayload {
   email: string;
   password: string;
@@ -257,13 +286,13 @@ export interface RegisterPayload {
 export interface CreateAppointmentPayload {
   serviceId: number;
   staffId?: number;
-  date: string; // ISO string
+  date: string;
   notes?: string;
   status?: AppointmentStatus;
 }
 
 export interface ReschedulePayload {
-  newDate: string; // ISO string
+  newDate: string;
 }
 
 export interface CreateBookingPayload {
@@ -286,6 +315,7 @@ export interface CreateSlotPayload {
   endTime: string;
 }
 
+// ===== Reports =====
 export interface RevenueReportData {
   totalRevenue: number;
   currency: string;
@@ -296,28 +326,39 @@ export interface TopServicesData {
   services: Array<{ serviceId: number; name: string; bookings: number; revenue: number }>;
 }
 
-
+// ===== Booking Flow =====
 export interface BookingFlowState {
   step: 1 | 2 | 3 | 4;
   selectedService: Service | null;
   selectedStaff: Staff | null;
   selectedSlot: Slot | null;
-  selectedDate: string | null; // YYYY-MM-DD
+  selectedDate: string | null;
   appliedPromocode: Promocode | null;
   notes: string;
   consentData: Record<string, boolean> | null;
 }
-export interface AppNotification {
+
+export interface IntakeForm {
   id: number;
-  message: string;
-  read: boolean;
+  clientId: number;
+  hairType?: string | null;
+  scalpCondition?: string | null;
+  productPreference?: string | null;
+  visitReason?: string | null;
+  lastChemicalTreatment?: string | null;
+  currentProducts?: string | null;
+  goals?: string | null;
+  allergies?: string | null;
+  notes?: string | null;
   createdAt: string;
+  client?: Client;
 }
 
-export interface AuthUser extends User {
-  token: string;
-   // Relations
-  admin?: Admin | null;
-  client?: Client | null;  
-  staff?: Staff | null;
+export interface ConsentForm {
+  id: number;
+  clientId: number;
+  consentGiven: boolean;
+  signature?: string | null;
+  date: string;
+  client?: Client;
 }

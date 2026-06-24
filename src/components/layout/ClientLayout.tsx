@@ -1,6 +1,6 @@
 // components/layout/ClientLayout.tsx
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../store/AuthContext';
+import { useAuthContext } from '../../hooks/useAuthcontext';
 import { ToastContainer } from '../ui/Toast';
 
 export default function ClientLayout() {

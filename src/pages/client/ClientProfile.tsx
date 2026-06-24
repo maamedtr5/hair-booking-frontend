@@ -9,7 +9,7 @@ import { useUIStore } from '../../store/uiStore';
 import { IntakeForm } from '../../components/forms/IntakeForm';
 import { Spinner } from '../../components/ui/Spinner';
 
-type Preferences = Record<string, unknown>;
+
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 const profileSchema = z.object({
@@ -181,7 +181,7 @@ export default function ClientProfile() {
           ) : clientProfile ? (
             <IntakeForm
               clientId={clientProfile.id}
-              defaultValues={clientProfile.preferences as Preferences}
+              defaultValues={undefined}
               onSuccess={() => addToast({ type: 'success', message: 'Intake form saved.' })}
             />
           ) : (

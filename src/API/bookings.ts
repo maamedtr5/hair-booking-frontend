@@ -14,7 +14,10 @@ export const bookingsApi = {
     const { data } = await apiClient.post<ApiResponse<Booking>>('/bookings', payload);
     return data.data!;
   },
-  update: async (id: number, payload: Partial<CreateBookingPayload> & { status?: BookingStatus }): Promise<Booking> => {
+  update: async (
+    id: number,
+    payload: Partial<CreateBookingPayload> & { status?: BookingStatus },
+  ): Promise<Booking> => {
     const { data } = await apiClient.put<ApiResponse<Booking>>(`/bookings/${id}`, payload);
     return data.data!;
   },

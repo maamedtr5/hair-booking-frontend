@@ -1,7 +1,7 @@
 import React from 'react';
 import type { AppointmentStatus, BookingStatus, PaymentStatus } from '../../types/models';
-import { Icons } from './icon'; // central icon registry
-import { Loader2 } from 'lucide-react'; // spinner icon from Lucide
+import { Icons } from './icon';
+import { Loader2 } from 'lucide-react';
 
 type BadgeVariant = 'gold' | 'green' | 'blue' | 'red' | 'muted' | 'amber';
 
@@ -10,8 +10,8 @@ interface BadgeProps {
   children: React.ReactNode;
   size?: 'sm' | 'md';
   dot?: boolean;
-  icon?: keyof typeof Icons;   // optional Lucide icon
-  loading?: boolean;           // optional loading spinner
+  icon?: keyof typeof Icons;
+  loading?: boolean;
 }
 
 export function Badge({
@@ -66,17 +66,19 @@ export function Badge({
 
 /* ─── Status Badge ─────────────────────────────────────────── */
 const STATUS_MAP: Record<AppointmentStatus | BookingStatus, BadgeVariant> = {
-  PENDING:   'amber',
-  CONFIRMED: 'green',
-  COMPLETED: 'blue',
-  CANCELLED: 'red',
+  PENDING:     'amber',
+  CONFIRMED:   'green',
+  COMPLETED:   'blue',
+  CANCELLED:   'red',
+  RESCHEDULED: 'gold',
 };
 
 const STATUS_LABEL: Record<AppointmentStatus | BookingStatus, string> = {
-  PENDING:   'Pending',
-  CONFIRMED: 'Confirmed',
-  COMPLETED: 'Completed',
-  CANCELLED: 'Cancelled',
+  PENDING:     'Pending',
+  CONFIRMED:   'Confirmed',
+  COMPLETED:   'Completed',
+  CANCELLED:   'Cancelled',
+  RESCHEDULED: 'Rescheduled',
 };
 
 interface StatusBadgeProps {

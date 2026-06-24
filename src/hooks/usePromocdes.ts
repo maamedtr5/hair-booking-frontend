@@ -1,17 +1,16 @@
-// hooks/usePromoCodes.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { PromocodesApi } from '../api/promocodes';
+import { promoCodesApi } from '../api/promocodes';
 
 const KEY = 'promoCodes';
 
 export function usePromoCodes() {
-  return useQuery({ queryKey: [KEY], queryFn: PromocodesApi.getAll });
+  return useQuery({ queryKey: [KEY], queryFn: promoCodesApi.getAll });
 }
 
 export function useCreatePromoCode() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: PromocodesApi.create,
+    mutationFn: promoCodesApi.create,
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
@@ -19,11 +18,11 @@ export function useCreatePromoCode() {
 export function useDeletePromoCode() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: PromocodesApi.delete,
+    mutationFn: promoCodesApi.delete,
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
 
 export function useValidatePromoCode() {
-  return useMutation({ mutationFn: PromocodesApi.getByCode });
+  return useMutation({ mutationFn: promoCodesApi.getByCode });
 }

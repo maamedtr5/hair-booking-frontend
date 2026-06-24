@@ -9,12 +9,9 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import type { ValueType, NameType, Payload} from 'recharts/types/component/DefaultTooltipContent';
-import type { TooltipProps} from 'recharts'
 import { useRevenueReport } from '../../hooks/useReports';
 import { Spinner } from '../ui/Spinner';
-import './styles/layout/DashboardStyles/RevenueChart.css'
-// ─── Types ────────────────────────────────────────────────────────────────────
+import '../../styles/layout/DashboardStyles/RevenueChart.css'
 
 type Period = '7d' | '30d' | '90d' | '12m';
 
@@ -24,7 +21,8 @@ interface ChartDataPoint {
   bookings: number;
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+type TooltipEntry = { dataKey: string; value: number; name: string };
+
 
 function formatGHS(value: number): string {
   return new Intl.NumberFormat('en-GH', {
@@ -75,15 +73,19 @@ function transformReportData(data: RevenueReportData | undefined, period: Period
 }
 
 // ─── Custom tooltip ───────────────────────────────────────────────────────────
-function CustomTooltip(props: TooltipProps<ValueType, NameType>) {
-  const { active, payload, label } = props;
+function CustomTooltip({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: TooltipEntry[];
+  label?: string;
+}) {
+  if (!active || !payload?.length) return null;
 
-  if (!active || !payload || payload.length === 0) return null;
-
-  const revenue =
-    (payload.find((p: Payload<ValueType, NameType>) => p.dataKey === 'revenue')?.value as number) ?? 0;
-  const bookings =
-    (payload.find((p: Payload<ValueType, NameType>) => p.dataKey === 'bookings')?.value as number) ?? 0;
+  const revenue  = (payload.find((p) => p.dataKey === 'revenue')?.value  as number) ?? 0;
+  const bookings = (payload.find((p) => p.dataKey === 'bookings')?.value as number) ?? 0;
 
   return (
     <div className="rev-chart__tooltip">
@@ -96,7 +98,6 @@ function CustomTooltip(props: TooltipProps<ValueType, NameType>) {
   );
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
 
 const PERIODS: { value: Period; label: string }[] = [
   { value: '7d', label: '7 days' },

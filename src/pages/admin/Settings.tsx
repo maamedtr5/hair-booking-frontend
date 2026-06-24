@@ -3,6 +3,7 @@ import { Save, Plus, Trash2 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import type { Resolver } from 'react-hook-form';
 
 import apiClient from '../../utils/apiClient';
 import { Button } from '../../components/ui/Button';
@@ -17,40 +18,15 @@ import { toast } from '../../store/uiStore';
 import { getErrorMessage } from '../../utils/apiClient';
 import { formatGHS } from '../../utils/formatCurrency';
 
-// Output type from schema — isActive is boolean (not boolean | undefined)
 type CreatePromoCodeFormValues = z.infer<typeof createPromoCodeSchema>;
 
-// ── Types ──────────────────────────────────────────────────────────────────────
-
-type SettingsSectionProps = {
-  title: string;
-  children: React.ReactNode;
-};
-
+type SettingsSectionProps = { title: string; children: React.ReactNode };
 type PromoRow = CreatePromoCodeFormValues & { id: number };
-
-// ── SettingsSection ────────────────────────────────────────────────────────────
 
 function SettingsSection({ title, children }: SettingsSectionProps) {
   return (
-    <div
-      style={{
-        background: 'var(--bg-card)',
-        border: '1px solid var(--border)',
-        borderRadius: 'var(--radius-lg)',
-        overflow: 'hidden',
-      }}
-    >
-      <div
-        style={{
-          padding: '18px 22px 14px',
-          borderBottom: '1px solid var(--border)',
-          fontFamily: 'var(--font-display)',
-          fontSize: '1.05rem',
-          fontWeight: 600,
-          color: 'var(--espresso)',
-        }}
-      >
+    <div style={{ background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
+      <div style={{ padding: '18px 22px 14px', borderBottom: '1px solid var(--border)', fontFamily: 'var(--font-display)', fontSize: '1.05rem', fontWeight: 600, color: 'var(--espresso)' }}>
         {title}
       </div>
       <div style={{ padding: '20px 22px' }}>{children}</div>
@@ -58,14 +34,10 @@ function SettingsSection({ title, children }: SettingsSectionProps) {
   );
 }
 
-// ── Settings page ──────────────────────────────────────────────────────────────
-
 export function Settings() {
   const qc = useQueryClient();
-  const [promoOpen, setPromoOpen] = useState(false);
+  const [promoOpen,    setPromoOpen]    = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
-
-  // ── Promo codes ──────────────────────────────────────────────────────────────
 
   const { data: promos = [], isLoading: promosLoading } = useQuery({
     queryKey: ['promocodes'],
@@ -90,9 +62,7 @@ export function Settings() {
   });
 
   const deletePromoMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiClient.delete(`/promocodes/${id}`);
-    },
+    mutationFn: async (id: number) => { await apiClient.delete(`/promocodes/${id}`); },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['promocodes'] });
       toast.success('Promo code deleted');
@@ -106,19 +76,16 @@ export function Settings() {
     handleSubmit: handlePromoSubmit,
     reset: resetPromo,
     formState: { errors: promoErrors, isSubmitting: promoSubmitting },
-  } = useForm<CreatePromoCodeFormValues>({ resolver: zodResolver(createPromoCodeSchema) });
+  } = useForm<CreatePromoCodeFormValues>({
+    // Cast resolves the input/output type mismatch caused by z.boolean().default(true)
+    resolver: zodResolver(createPromoCodeSchema) as Resolver<CreatePromoCodeFormValues>,
+  });
 
-  const closePromoModal = () => {
-    setPromoOpen(false);
-    resetPromo();
-  };
-
-  // ── Render ───────────────────────────────────────────────────────────────────
+  const closePromoModal = () => { setPromoOpen(false); resetPromo(); };
 
   return (
     <>
       <div className="settings-page animate-fade-up">
-        {/* Header */}
         <div>
           <h1 className="page-title">Settings</h1>
           <p className="page-sub">Configure business settings for Locs Allure</p>
@@ -131,68 +98,30 @@ export function Settings() {
               New Promo Code
             </Button>
           </div>
-
           {promosLoading ? (
             <PageSpinner message="Loading…" />
           ) : (
             <table className="promo-table">
               <thead>
-                <tr>
-                  <th>Code</th>
-                  <th>Discount</th>
-                  <th>Valid Until</th>
-                  <th>Status</th>
-                  <th />
-                </tr>
+                <tr><th>Code</th><th>Discount</th><th>Valid Until</th><th>Status</th><th /></tr>
               </thead>
               <tbody>
                 {promos.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={5}
-                      style={{
-                        textAlign: 'center',
-                        padding: '28px 0',
-                        fontStyle: 'italic',
-                        color: 'var(--text-muted)',
-                      }}
-                    >
-                      No promo codes yet
+                  <tr><td colSpan={5} style={{ textAlign: 'center', padding: '28px 0', fontStyle: 'italic', color: 'var(--text-muted)' }}>No promo codes yet</td></tr>
+                ) : promos.map((p: PromoRow) => (
+                  <tr key={p.id}>
+                    <td>
+                      <span className="promo-code">{p.code}</span>
+                      {p.description && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{p.description}</div>}
+                    </td>
+                    <td>{p.type === 'PERCENTAGE' ? `${p.discount}% off` : `${formatGHS(p.discount)} off`}</td>
+                    <td>{p.validUntil ? p.validUntil.split('T')[0] : '—'}</td>
+                    <td><Badge variant={p.isActive ? 'green' : 'muted'} size="sm">{p.isActive ? 'Active' : 'Inactive'}</Badge></td>
+                    <td>
+                      <Button variant="ghost" size="sm" icon={<Trash2 size={13} />} onClick={() => setDeleteTarget(p.id)} />
                     </td>
                   </tr>
-                ) : (
-                  promos.map((p: PromoRow) => (
-                    <tr key={p.id}>
-                      <td>
-                        <span className="promo-code">{p.code}</span>
-                        {p.description && (
-                          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>
-                            {p.description}
-                          </div>
-                        )}
-                      </td>
-                      <td>
-                        {p.type === 'PERCENTAGE'
-                          ? `${p.discount}% off`
-                          : `${formatGHS(p.discount)} off`}
-                      </td>
-                      <td>{p.validUntil ? p.validUntil.split('T')[0] : '—'}</td>
-                      <td>
-                        <Badge variant={p.isActive ? 'green' : 'muted'} size="sm">
-                          {p.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                      </td>
-                      <td>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          icon={<Trash2 size={13} />}
-                          onClick={() => setDeleteTarget(p.id)}
-                        />
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           )}
@@ -201,21 +130,9 @@ export function Settings() {
         {/* Notification Preferences */}
         <SettingsSection title="Notification Preferences">
           {[
-            {
-              label: 'Appointment reminders',
-              sub: 'Send SMS/email reminders before appointments',
-              key: 'reminders',
-            },
-            {
-              label: 'Booking confirmations',
-              sub: 'Notify clients when their booking is confirmed',
-              key: 'confirmations',
-            },
-            {
-              label: 'Cancellation alerts',
-              sub: 'Alert admin when an appointment is cancelled',
-              key: 'cancellations',
-            },
+            { label: 'Appointment reminders',   sub: 'Send SMS/email reminders before appointments',   key: 'reminders' },
+            { label: 'Booking confirmations',   sub: 'Notify clients when their booking is confirmed', key: 'confirmations' },
+            { label: 'Cancellation alerts',     sub: 'Alert admin when an appointment is cancelled',   key: 'cancellations' },
           ].map(({ label, sub, key }) => (
             <NotificationToggle key={key} label={label} sub={sub} />
           ))}
@@ -236,48 +153,27 @@ export function Settings() {
       </div>
 
       {/* Create Promo Code Modal */}
-      <Modal
-        open={promoOpen}
-        onClose={closePromoModal}
-        title="Create Promo Code"
-        size="sm"
+      <Modal open={promoOpen} onClose={closePromoModal} title="Create Promo Code" size="sm"
         footer={
           <>
-            <Button variant="ghost" onClick={closePromoModal}>
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={closePromoModal}>Cancel</Button>
             <Button form="promo-form" type="submit" loading={promoSubmitting || createPromoMutation.isPending}>
               Create Code
             </Button>
           </>
         }
       >
-        <form
-          id="promo-form"
+        <form id="promo-form"
           onSubmit={handlePromoSubmit((values) => createPromoMutation.mutate(values))}
           noValidate
         >
           <div className="form-fields">
-            <Input
-              label="Code"
-              placeholder="WELCOME20"
-              error={promoErrors.code?.message}
-              {...registerPromo('code')}
-            />
-            <Input
-              label="Description (optional)"
-              placeholder="New client welcome discount"
-              {...registerPromo('description')}
-            />
+            <Input label="Code" placeholder="WELCOME20" error={promoErrors.code?.message} {...registerPromo('code')} />
+            <Input label="Description (optional)" placeholder="New client welcome discount" {...registerPromo('description')} />
             <div className="form-row">
-              <Input
-                label="Discount value"
-                type="number"
-                step="0.01"
-                placeholder="20"
+              <Input label="Discount value" type="number" step="0.01" placeholder="20"
                 error={promoErrors.discount?.message}
-                {...registerPromo('discount', { valueAsNumber: true })}
-              />
+                {...registerPromo('discount', { valueAsNumber: true })} />
               <div>
                 <label className="select-label">Type</label>
                 <select className="form-select" {...registerPromo('type')}>
@@ -287,24 +183,14 @@ export function Settings() {
               </div>
             </div>
             <div className="form-row">
-              <Input
-                label="Valid from"
-                type="date"
-                error={promoErrors.validFrom?.message}
-                {...registerPromo('validFrom')}
-              />
-              <Input
-                label="Valid until"
-                type="date"
-                error={promoErrors.validUntil?.message}
-                {...registerPromo('validUntil')}
-              />
+              <Input label="Valid from" type="date" error={promoErrors.validFrom?.message} {...registerPromo('validFrom')} />
+              <Input label="Valid until" type="date" error={promoErrors.validUntil?.message} {...registerPromo('validUntil')} />
             </div>
           </div>
         </form>
       </Modal>
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Confirmation */}
       <ConfirmModal
         open={deleteTarget !== null}
         onClose={() => setDeleteTarget(null)}
@@ -319,30 +205,16 @@ export function Settings() {
   );
 }
 
-// ── NotificationToggle ─────────────────────────────────────────────────────────
-
 function NotificationToggle({ label, sub }: { label: string; sub?: string }) {
   const [enabled, setEnabled] = useState(true);
   return (
-    <div
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: '10px 0',
-        borderBottom: '1px solid var(--border)',
-      }}
-    >
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
       <div>
         <div style={{ fontWeight: 600 }}>{label}</div>
         {sub && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{sub}</div>}
       </div>
       <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <input
-          type="checkbox"
-          checked={enabled}
-          onChange={() => setEnabled((s) => !s)}
-        />
+        <input type="checkbox" checked={enabled} onChange={() => setEnabled((s) => !s)} />
       </label>
     </div>
   );

@@ -1,10 +1,9 @@
-// components/booking/ServiceSelector.tsx
 import { useState, useMemo } from 'react';
 import { useServices } from '../../hooks/useServices';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import type { Service } from '../../types';
-import '../styles/layout/BookingStyles/ServiceSelector.css';
+import '../../styles/layout/BookingStyles/ServiceSelector.css';
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('en-GH', {
@@ -72,10 +71,11 @@ export function ServiceSelector() {
 
   const filtered = useMemo(() => {
     if (!services) return [];
+    if (!search) return services;
+    const q = search.toLowerCase();
     return services.filter((s) =>
-      !search ||
-      s.name.toLowerCase().includes(search.toLowerCase()) ||
-      s.description?.toLowerCase().includes(search.toLowerCase())
+      s.name.toLowerCase().includes(q) ||
+      s.description?.toLowerCase().includes(q),
     );
   }, [services, search]);
 
@@ -123,7 +123,7 @@ export function ServiceSelector() {
             onClick={() => setSearch('')}
             className="btn btn--ghost btn--sm"
           >
-            Clear filters
+            Clear search
           </button>
         </div>
       ) : (

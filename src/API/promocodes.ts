@@ -1,25 +1,32 @@
-// api/Promocodes.ts
 import apiClient from '../utils/apiClient';
-import type { Promocode } from '../types/models';
+import type { Promocode, ApiResponse } from '../types/models';
 
-export const PromocodesApi = {
+export const promoCodesApi = {
   getAll: async (): Promise<Promocode[]> => {
-    const { data } = await apiClient.get('/Promocodes');
-    return data.data ?? data;
+    const { data } = await apiClient.get<ApiResponse<Promocode[]>>('/promocodes');
+    return data.data ?? [];
   },
   getByCode: async (code: string): Promise<Promocode> => {
-    const { data } = await apiClient.get(`/Promocodes/code/${code}`);
-    return data.data ?? data;
+    const { data } = await apiClient.get<ApiResponse<Promocode>>(`/promocodes/code/${code}`);
+    return data.data!;
   },
-  create: async (payload: { code: string; discountType: 'PERCENTAGE' | 'FIXED'; discountValue: number; maxUses?: number; expiryDate?: string }): Promise<Promocode> => {
-    const { data } = await apiClient.post('/Promocodes', payload);
-    return data.data ?? data;
+  create: async (payload: {
+    code: string;
+    discount: number;
+    type: 'PERCENTAGE' | 'FIXED';
+    validFrom: string;
+    validUntil: string;
+    description?: string;
+    isActive?: boolean;
+  }): Promise<Promocode> => {
+    const { data } = await apiClient.post<ApiResponse<Promocode>>('/promocodes', payload);
+    return data.data!;
   },
   update: async (id: number, payload: Partial<Promocode>): Promise<Promocode> => {
-    const { data } = await apiClient.put(`/Promocodes/${id}`, payload);
-    return data.data ?? data;
+    const { data } = await apiClient.put<ApiResponse<Promocode>>(`/promocodes/${id}`, payload);
+    return data.data!;
   },
   delete: async (id: number): Promise<void> => {
-    await apiClient.delete(`/Promocodes/${id}`);
+    await apiClient.delete(`/promocodes/${id}`);
   },
 };

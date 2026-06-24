@@ -22,7 +22,6 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  // ✅ initialize directly instead of setState in useEffect
   const [user, setUser] = useState<AuthUser | null>(() => loadStoredUser());
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing] = useState(false);
@@ -38,13 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const response = await apiLogin(payload);
-
         if (response.user) {
           const authUser = { ...response.user, token: response.token };
           persist(authUser);
           return authUser;
         } else {
-          // ✅ fallback: fetch user profile
           const fetchedUser = await usersApi.getMe();
           const authUser = { ...fetchedUser, token: response.token };
           persist(authUser);
@@ -62,7 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const response = await apiRegister(payload);
-
         if (response.user) {
           const authUser = { ...response.user, token: response.token };
           persist(authUser);

@@ -12,5 +12,5 @@ export function useAuthContext(): AuthContextValue {
   return ctx;
 }
 
-// Optional alias for convenience
+
 export { useAuthContext as useAuth };

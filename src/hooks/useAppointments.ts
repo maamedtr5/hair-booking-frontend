@@ -3,7 +3,7 @@ import * as appointmentsApi from '../api/appointments';
 import type { AppointmentStatus, CreateAppointmentPayload, ReschedulePayload } from '../types/models';
 import { toast } from '../store/uiStore';
 import { getErrorMessage } from '../utils/apiClient';
-import { useAuthContext } from '../store/AuthContext';
+import { useAuthContext } from '../hooks/useAuthcontext';
 
 export const appointmentKeys = {
   all: ['appointments'] as const,
@@ -13,8 +13,6 @@ export const appointmentKeys = {
   byDate: (date: string) => ['appointments', 'date', date] as const,
   byStatus: (status: AppointmentStatus) => ['appointments', 'status', status] as const,
 };
-
-
 
 export function useAppointments() {
   return useQuery({
@@ -38,26 +36,25 @@ export function useAppointmentsByClient(clientId: number) {
     enabled: !!clientId,
   });
 }
+
 export function useMyAppointments() {
   const { user } = useAuthContext();
-  return useAppointmentsByStaff(user?.staff?.id);
+  return useAppointmentsByStaff(user?.staffId ?? null);
 }
 
-export function useAppointmentsByStaff(staffId: number | undefined) {
+export function useAppointmentsByStaff(staffId: number | null | undefined) {
   return useQuery({
     queryKey: appointmentKeys.byStaff(staffId ?? 0),
     queryFn: () => appointmentsApi.getAppointmentsByStaff(staffId!),
-    enabled: !!staffId, // only runs if staffId is truthy
+    enabled: !!staffId,
   });
 }
-
 
 export function useAppointmentsByDate(date: string) {
   return useQuery({
     queryKey: appointmentKeys.byDate(date),
     queryFn: () => appointmentsApi.getAppointmentsByDate(date),
     enabled: !!date,
-    // Refetch every 2 minutes — availability changes frequently
     refetchInterval: 2 * 60 * 1000,
   });
 }

@@ -17,15 +17,17 @@ export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
   }
 
   // Logged in but wrong role → redirect to their correct portal
-  if (roles.length > 0 && user && !roles.includes(user.role)) {
+  const userWithRole = user as unknown as { role: Role };
+
+  if (roles.length > 0 && user && userWithRole.role && !roles.includes(userWithRole.role)) {
     const fallback =
-      user.role === 'ADMIN'
+      userWithRole.role === 'ADMIN'
         ? '/dashboard'
-        : user.role === 'STAFF'
+        : userWithRole.role === 'STAFF'
           ? '/staff/schedule'
           : '/my/bookings';
     return <Navigate to={fallback} replace />;
   }
 
-  return <Outlet />;
+  return <Outlet />; 
 }

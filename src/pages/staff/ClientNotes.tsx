@@ -50,9 +50,6 @@ export function ClientNotes() {
 }
 
 // ── Inner form ────────────────────────────────────────────────────────────────
-// Receives resolved data as props so useState initialisers run exactly once.
-// No effects, no refs, no cascading renders.
-
 interface ClientNotesFormProps {
   id: number;
   client: Client | null;
@@ -63,7 +60,7 @@ function ClientNotesForm({ id, client, appointments }: ClientNotesFormProps) {
   const qc = useQueryClient();
 
   // Initialised from props on first mount — stable, no effect required
-  const [notes, setNotes] = useState<string>(client?.notes ?? '');
+  const [notes, setNotes] = useState<string>('');
   const [address, setAddress] = useState<string>(client?.address ?? '');
 
   const saveMutation = useMutation({
@@ -87,13 +84,13 @@ function ClientNotesForm({ id, client, appointments }: ClientNotesFormProps) {
       {/* Client profile */}
       <div className="client-card">
         <div className="client-avatar">
-          {client?.name?.charAt(0).toUpperCase() ?? 'C'}
+          {client?.user?.name?.charAt(0).toUpperCase() ?? 'C'}
         </div>
         <div>
-          <div className="client-name">{client?.name ?? `Client #${id}`}</div>
+          <div className="client-name">{client?.user?.name ?? `Client #${id}`}</div>
           <div className="client-meta">
-            {client?.email ?? '—'}
-            {client?.email && client?.address && ' · '}
+            {client?.user?.email ?? '—'}
+            {client?.user?.email && client?.address && ' · '}
             {client?.address}
           </div>
         </div>

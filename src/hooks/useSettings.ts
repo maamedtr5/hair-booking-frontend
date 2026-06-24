@@ -1,21 +1,21 @@
 // hooks/useSettings.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { SettingsApi } from '../api/settings';
+import {  settingsApi } from '../api/settings';
 
 const KEY = 'settings';
 
 export function useSettings() {
-  return useQuery({ queryKey: [KEY], queryFn: SettingsApi.getAll });
+  return useQuery({ queryKey: [KEY], queryFn:  settingsApi.getAll });
 }
 
 export function useSettingByKey(key: string) {
-  return useQuery({ queryKey: [KEY, key], queryFn: () => SettingsApi.getByKey(key), enabled: !!key });
+  return useQuery({ queryKey: [KEY, key], queryFn: () =>  settingsApi.getByKey(key), enabled: !!key });
 }
 
 export function useUpdateSetting() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, data }: { id: number; data: { value: string } }) => SettingsApi.update(id, data),
+    mutationFn: ({ id, data }: { id: number; data: { value: string } }) =>  settingsApi.update(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }
@@ -23,7 +23,7 @@ export function useUpdateSetting() {
 export function useCreateSetting() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: SettingsApi.create,
+    mutationFn:  settingsApi.create,
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
   });
 }

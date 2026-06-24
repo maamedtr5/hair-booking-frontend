@@ -23,7 +23,7 @@ export function RegisterPage() {
   const onSubmit = async (values: RegisterFormValues) => {
     setServerError('');
     try {
-      // ✅ context register handles API + persistence
+    
       await register({
         name: values.name,
         email: values.email,

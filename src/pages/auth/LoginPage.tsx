@@ -9,7 +9,7 @@ import { Button } from '../../components/ui/Button';
 import { getErrorMessage } from '../../utils/apiClient';
 
 export function LoginPage() {
-  const { login } = useAuth(); // ✅ use context login directly
+  const { login } = useAuth(); 
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
@@ -26,7 +26,7 @@ export function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     setServerError('');
     try {
-      // ✅ context login handles API + persistence
+      
         const user = (await login(values)) as { role?: string } | null;
       const dest =
         from ??
