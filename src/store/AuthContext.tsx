@@ -1,13 +1,15 @@
+// src/store/AuthContext.tsx
 import {
   createContext,
   useState,
   useCallback,
+  useEffect,
   type ReactNode,
-} from 'react';
-import { login as apiLogin, register as apiRegister } from '../api/auth';
-import * as usersApi from '../api/users';
-import { loadStoredUser } from '../utils/authStorage';
-import type { AuthUser, LoginPayload, RegisterPayload } from '../types';
+} from "react";
+import { login as apiLogin, register as apiRegister } from "../api/auth";
+import * as usersApi from "../api/users";
+import { loadStoredUser } from "../utils/authStorage";
+import type { AuthUser, LoginPayload, RegisterPayload } from "../types";
 
 interface AuthContextValue {
   user: AuthUser | null;
@@ -26,9 +28,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing] = useState(false);
 
+  const logout = useCallback(() => {
+    localStorage.removeItem("auth_token");
+    localStorage.removeItem("auth_user");
+    setUser(null);
+  }, []);
+
+  useEffect(() => {
+    // Listen for logout events from apiClient
+    window.addEventListener("auth:logout", logout);
+    return () => window.removeEventListener("auth:logout", logout);
+  }, [logout]);
+
   const persist = useCallback((authUser: AuthUser) => {
-    localStorage.setItem('auth_token', authUser.token);
-    localStorage.setItem('auth_user', JSON.stringify(authUser));
+    localStorage.setItem("auth_token", authUser.token);
+    localStorage.setItem("auth_user", JSON.stringify(authUser));
     setUser(authUser);
   }, []);
 
@@ -37,16 +51,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const response = await apiLogin(payload);
-        if (response.user) {
-          const authUser = { ...response.user, token: response.token };
-          persist(authUser);
-          return authUser;
-        } else {
-          const fetchedUser = await usersApi.getMe();
-          const authUser = { ...fetchedUser, token: response.token };
-          persist(authUser);
-          return authUser;
-        }
+        const authUser = response.user
+          ? { ...response.user, token: response.token }
+          : { ...(await usersApi.getMe()), token: response.token };
+        persist(authUser);
+        return authUser;
       } finally {
         setIsLoading(false);
       }
@@ -59,28 +68,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const response = await apiRegister(payload);
-        if (response.user) {
-          const authUser = { ...response.user, token: response.token };
-          persist(authUser);
-          return authUser;
-        } else {
-          const fetchedUser = await usersApi.getMe();
-          const authUser = { ...fetchedUser, token: response.token };
-          persist(authUser);
-          return authUser;
-        }
+        const authUser = response.user
+          ? { ...response.user, token: response.token }
+          : { ...(await usersApi.getMe()), token: response.token };
+        persist(authUser);
+        return authUser;
       } finally {
         setIsLoading(false);
       }
     },
     [persist]
   );
-
-  const logout = useCallback(() => {
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('auth_user');
-    setUser(null);
-  }, []);
 
   return (
     <AuthContext.Provider

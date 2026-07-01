@@ -1,15 +1,12 @@
 // src/utils/apiClient.ts
 import axios, { AxiosError, type AxiosResponse } from "axios";
 
-// ✅ Use frontend env variable, fallback to localhost:5001
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
   timeout: 15_000,
-  headers: {
-    "Content-Type": "application/json",
-  },
+  headers: { "Content-Type": "application/json" },
 });
 
 // ─── Request Interceptor ────────────────────────────────────────────────
@@ -29,9 +26,15 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      // Clear stale token and redirect to login
+      // Clear stale auth state
       localStorage.removeItem("auth_token");
-      window.location.replace("/login");
+      localStorage.removeItem("auth_user");
+
+      // Avoid infinite redirect loops
+      if (window.location.pathname !== "/login") {
+        // Use a custom event so React Router can handle navigation
+        window.dispatchEvent(new CustomEvent("auth:logout"));
+      }
     }
     return Promise.reject(error);
   },

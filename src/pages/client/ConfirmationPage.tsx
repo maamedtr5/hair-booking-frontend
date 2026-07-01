@@ -1,106 +1,91 @@
-import { Link, useLocation } from 'react-router-dom';
-import { Button } from '../../components/ui/Button';
-
+// src/pages/client/ConfirmationPage.tsx
+import { useParams, Link } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { Button } from "../../components/ui/Button";
+import { getBookingById } from "../../api/bookings";
+import { getPaymentStatus } from "../../api/payments";
 
 export function ConfirmationPage() {
-  const { state } = useLocation();
-  const booking = state?.booking;
+  const { bookingId } = useParams<{ bookingId: string }>();
+
+  // Fetch booking details
+  const {
+    data: booking,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: ["booking", bookingId],
+    queryFn: () => getBookingById(bookingId!),
+    enabled: !!bookingId,
+  });
+
+  // Fetch payment status
+  const { data: paymentStatus } = useQuery({
+    queryKey: ["paymentStatus", bookingId],
+    queryFn: () => getPaymentStatus(bookingId!),
+    enabled: !!bookingId,
+  });
+
+  if (isLoading) {
+    return <p className="text-center mt-10">Loading booking...</p>;
+  }
+
+  if (error || !booking) {
+    return (
+      <div className="text-center mt-10">
+        <p className="text-red-600">Booking not found.</p>
+        <Link to="/book" className="text-blue-600 underline">
+          Return to booking
+        </Link>
+      </div>
+    );
+  }
 
   return (
-    <>
-      <style>{`
-        .confirm-page {
-          min-height: 70vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 60px 24px;
-        }
-        .confirm-card {
-          max-width: 480px;
-          width: 100%;
-          text-align: center;
-          animation: fadeUp 0.5s ease both;
-        }
-        .confirm-icon {
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          background: #D1FAE5;
-          border: 3px solid #065F46;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 36px;
-          margin: 0 auto 24px;
-          animation: fadeIn 0.6s 0.2s ease both;
-        }
-        .confirm-title {
-          font-family: var(--font-display);
-          font-size: 2rem;
-          font-weight: 600;
-          color: var(--espresso);
-          margin-bottom: 10px;
-        }
-        .confirm-sub {
-          font-size: 14px;
-          color: var(--text-muted);
-          line-height: 1.7;
-          margin-bottom: 32px;
-          max-width: 360px;
-          margin-left: auto;
-          margin-right: auto;
-        }
-        .confirm-ref {
-          background: var(--cream-mid);
-          border-radius: var(--radius-lg);
-          padding: 18px 24px;
-          margin-bottom: 28px;
-          font-size: 13px;
-          color: var(--text-secondary);
-        }
-        .confirm-ref-id {
-          font-family: var(--font-display);
-          font-size: 1.2rem;
-          font-weight: 600;
-          color: var(--espresso);
-          letter-spacing: 0.04em;
-        }
-        .confirm-btns {
-          display: flex;
-          flex-direction: column;
-          gap: 10px;
-        }
-      `}</style>
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-6">
+      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md text-center">
+        <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-green-100 border-4 border-green-700 text-4xl">
+          ✓
+        </div>
 
-      <div className="confirm-page">
-        <div className="confirm-card">
-          <div className="confirm-icon">✓</div>
-          <h1 className="confirm-title">Booking Confirmed!</h1>
-          <p className="confirm-sub">
-            Your appointment at Locs Allure has been successfully booked.
-            We'll send you a reminder before your appointment.
+        <h1 className="text-2xl font-bold mb-2">Booking Confirmed!</h1>
+        <p className="text-gray-600 mb-6">
+          Your appointment at Locs Allure has been successfully booked.
+          We’ll send you a reminder before your appointment.
+        </p>
+
+        <div className="bg-gray-100 rounded-lg p-4 mb-6">
+          <p className="text-sm text-gray-500 mb-1">Booking Reference</p>
+          <p className="text-lg font-semibold text-gray-900">#{booking.id}</p>
+        </div>
+
+        <div className="space-y-3">
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Service:</span> {booking.service.name}
           </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Date:</span> {booking.slot.date}
+          </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Time:</span> {booking.slot.time}
+          </p>
+          <p className="text-sm text-gray-700">
+            <span className="font-semibold">Payment Status:</span>{" "}
+            {paymentStatus?.status ?? "Pending"}
+          </p>
+        </div>
 
-          {booking && (
-            <div className="confirm-ref">
-              <div style={{ marginBottom: 6 }}>Booking Reference</div>
-              <div className="confirm-ref-id">#{booking.id}</div>
-            </div>
-          )}
-
-          <div className="confirm-btns">
-            <Link to="/my/bookings">
-              <Button fullWidth size="lg">View My Bookings</Button>
-            </Link>
-            <Link to="/book">
-              <Button fullWidth variant="outline" size="md">
-                Book Another Appointment
-              </Button>
-            </Link>
-          </div>
+        <div className="mt-6 flex flex-col gap-3">
+          <Link to="/my/bookings">
+            <Button fullWidth size="lg">View My Bookings</Button>
+          </Link>
+          <Link to="/book">
+            <Button fullWidth variant="outline" size="md">
+              Book Another Appointment
+            </Button>
+          </Link>
         </div>
       </div>
-    </>
+    </div>
   );
 }

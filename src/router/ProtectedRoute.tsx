@@ -1,33 +1,34 @@
-import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '../hooks/useAuth';
-import type { Role } from '../types/models';
+// src/components/ProtectedRoute.tsx
+import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "../hooks/useAuth";
+import type { Role } from "../types/models";
+import { Spinner } from "../components/ui/Spinner";
+
 
 interface ProtectedRouteProps {
-  /** Roles allowed to access this route. If empty, any authenticated user is allowed. */
   roles?: Role[];
 }
 
 export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, isInitializing, user } = useAuth();
   const location = useLocation();
 
-  // Not logged in → redirect to login, preserving the intended destination
+  // While auth state is hydrating → show spinner
+  if (isInitializing) {
+    return <Spinner />;
+  }
+
+  // Not logged in → redirect to login, preserving intended destination
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // Logged in but wrong role → redirect to their correct portal
-  const userWithRole = user as unknown as { role: Role };
+  // Logged in but wrong role → redirect to unauthorized page
+  const userRole = (user as Partial<{ role: Role }>)?.role;
 
-  if (roles.length > 0 && user && userWithRole.role && !roles.includes(userWithRole.role)) {
-    const fallback =
-      userWithRole.role === 'ADMIN'
-        ? '/dashboard'
-        : userWithRole.role === 'STAFF'
-          ? '/staff/schedule'
-          : '/my/bookings';
-    return <Navigate to={fallback} replace />;
+  if (roles.length > 0 && userRole && !roles.includes(userRole)) {
+    return <Navigate to="/unauthorized" replace />;
   }
 
-  return <Outlet />; 
+  return <Outlet />;
 }
