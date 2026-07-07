@@ -1,55 +1,99 @@
-// src/pages/LandingPage.tsx
-import { Link } from "react-router-dom";
+import { Link } from 'react-router-dom';
+import { Scissors, Clock, ShieldCheck } from 'lucide-react';
+import { Navbar } from '../components/layout/Navbar';
+import { useServices } from '../hooks/useServices';
+import { Spinner } from '../components/ui/Spinner';
 
-export default function LandingPage() {
+function formatPrice(price: number): string {
+  return new Intl.NumberFormat('en-GH', {
+    style: 'currency',
+    currency: 'GHS',
+    minimumFractionDigits: 0,
+  }).format(price);
+}
+
+export function LandingPage() {
+  const { data: services, isLoading } = useServices();
+  const featured = (services ?? []).filter((s) => s.isActive).slice(0, 3);
+
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50">
-      {/* Navbar */}
-      <nav className="flex justify-between items-center px-10 py-5 bg-white shadow-md">
-        <h1 className="text-3xl font-extrabold text-blue-600 tracking-wide">
-          Locs Allure
-        </h1>
-        <div className="space-x-6">
-          <Link
-            to="/book"
-            className="px-5 py-2 rounded-md bg-blue-600 text-white font-medium hover:bg-blue-700 transition"
-          >
-            Book Now
-          </Link>
-          <Link
-            to="/login"
-            className="px-5 py-2 rounded-md bg-gray-200 font-medium hover:bg-gray-300 transition"
-          >
-            Sign In
-          </Link>
-          <Link
-            to="/register"
-            className="px-5 py-2 rounded-md bg-gray-200 font-medium hover:bg-gray-300 transition"
-          >
-            Register
-          </Link>
+    <div className="landing-page">
+      <Navbar variant="public" />
+
+      <section className="landing-hero">
+        <div className="landing-hero__content">
+          <span className="landing-hero__eyebrow">Madina Estates, Accra</span>
+          <h1 className="landing-hero__title">
+            Beautiful locs, braids &amp; natural hair — crafted with care
+          </h1>
+          <p className="landing-hero__sub">
+            Book your appointment online in minutes. Choose your stylist, your time,
+            and let us take care of the rest.
+          </p>
+          <div className="landing-hero__actions">
+            <Link to="/book" className="btn btn--gold btn--lg">Book Now</Link>
+            <Link to="/register" className="btn btn--ghost btn--lg">Create Account</Link>
+          </div>
         </div>
-      </nav>
+      </section>
 
-      {/* Hero Section */}
-      <main className="flex flex-col items-center justify-center flex-grow text-center px-6">
-        <h2 className="text-5xl md:text-6xl font-extrabold mb-6 text-gray-900 leading-tight">
-          Your Trusted Hair Booking Service
-        </h2>
-        <p className="text-lg md:text-xl text-gray-600 max-w-2xl mb-10">
-          Book appointments with ease, manage your schedule, and enjoy a seamless salon experience.
-        </p>
-        <Link
-          to="/book"
-          className="px-8 py-3 bg-blue-600 text-white rounded-lg shadow-lg hover:bg-blue-700 transition text-lg font-semibold"
-        >
-          Get Started
-        </Link>
-      </main>
+      <section className="landing-features container">
+        <div className="landing-feature">
+          <div className="landing-feature__icon"><Scissors size={22} /></div>
+          <h3 className="landing-feature__title">Skilled Stylists</h3>
+          <p className="landing-feature__body">
+            Every member of our team is trained in protective styling, natural hair
+            care, and loc maintenance.
+          </p>
+        </div>
+        <div className="landing-feature">
+          <div className="landing-feature__icon"><Clock size={22} /></div>
+          <h3 className="landing-feature__title">Easy Scheduling</h3>
+          <p className="landing-feature__body">
+            Pick a service, a stylist, and a time that works for you — all online,
+            no phone calls needed.
+          </p>
+        </div>
+        <div className="landing-feature">
+          <div className="landing-feature__icon"><ShieldCheck size={22} /></div>
+          <h3 className="landing-feature__title">Secure Payments</h3>
+          <p className="landing-feature__body">
+            Pay safely by card or mobile money through Paystack — Ghana's trusted
+            payment partner.
+          </p>
+        </div>
+      </section>
 
-      {/* Footer */}
-      <footer className="text-center py-6 bg-white border-t text-gray-500 text-sm">
-        © {new Date().getFullYear()} Locs Allure. All rights reserved.
+      <section className="landing-services container">
+        <div className="landing-services__header">
+          <h2 className="section-title">Popular Services</h2>
+          <Link to="/book" className="landing-services__link">View all →</Link>
+        </div>
+
+        {isLoading ? (
+          <div className="spinner-overlay"><Spinner size="lg" /></div>
+        ) : (
+          <div className="landing-services__grid">
+            {featured.map((service) => (
+              <div key={service.id} className="landing-service-card">
+                <h3 className="landing-service-card__name">{service.name}</h3>
+                {service.description && (
+                  <p className="landing-service-card__desc">{service.description}</p>
+                )}
+                <div className="landing-service-card__footer">
+                  <span className="landing-service-card__price">
+                    {formatPrice(service.price)}
+                  </span>
+                  <Link to="/book" className="btn btn--ghost btn--sm">Book</Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <footer className="landing-footer">
+        <p>Locs Allure — Madina Estates, Accra, Ghana</p>
       </footer>
     </div>
   );

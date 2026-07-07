@@ -3,7 +3,7 @@ import * as appointmentsApi from '../api/appointments';
 import type { AppointmentStatus, CreateAppointmentPayload, ReschedulePayload } from '../types/models';
 import { toast } from '../store/uiStore';
 import { getErrorMessage } from '../utils/apiClient';
-import { useAuthContext } from '../hooks/useAuthcontext';
+import { useAuthContext } from './useAuthcontext';
 
 export const appointmentKeys = {
   all: ['appointments'] as const,
@@ -39,7 +39,7 @@ export function useAppointmentsByClient(clientId: number) {
 
 export function useMyAppointments() {
   const { user } = useAuthContext();
-  return useAppointmentsByStaff(user?.staffId ?? null);
+  return useAppointmentsByStaff(user?.staff?.id ?? null);
 }
 
 export function useAppointmentsByStaff(staffId: number | null | undefined) {

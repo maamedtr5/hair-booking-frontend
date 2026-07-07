@@ -9,7 +9,7 @@ import {
 import { login as apiLogin, register as apiRegister } from "../api/auth";
 import * as usersApi from "../api/users";
 import { loadStoredUser } from "../utils/authStorage";
-import type { AuthUser, LoginPayload, RegisterPayload } from "../types";
+import type { AuthUser, LoginPayload, RegisterPayload } from "../types/models";
 
 interface AuthContextValue {
   user: AuthUser | null;

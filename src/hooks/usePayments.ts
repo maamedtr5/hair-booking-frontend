@@ -1,41 +1,28 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import * as paymentsApi from '../api/payments';
 import type { InitPaymentPayload } from '../types/models';
 import { toast } from '../store/uiStore';
 import { getErrorMessage } from '../utils/apiClient';
 
 /**
- * Initialise a Paystack payment.
- * On success, the component should redirect to authorizationUrl.
+ * Initialise a Paystack payment for the current client's own booking.
+ * On success, redirect the browser to authorizationUrl (see BookingPage).
+ *
+ * This is the ONLY payment mutation available to the client portal.
+ * Payment confirmation is never decided here — the backend Paystack
+ * webhook is the sole source of truth for payment status. After
+ * redirecting to Paystack, poll the booking via useBooking(id) (see
+ * ConfirmationPage) to read the real, backend-confirmed payment status.
+ *
+ * useMarkPaymentSuccess / useMarkPaymentFailed have been moved to
+ * hooks/admin/usePaymentAdmin.ts — those endpoints require ADMIN or
+ * STAFF on the backend and must never be reachable from client-facing
+ * code. Do not re-add them here.
  */
 export function useInitializePayment() {
   return useMutation({
     mutationFn: (payload: InitPaymentPayload) =>
       paymentsApi.initializePayment(payload),
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
-}
-
-export function useMarkPaymentSuccess() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => paymentsApi.markPaymentSuccess(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['bookings'] });
-      toast.success('Payment confirmed');
-    },
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
-}
-
-export function useMarkPaymentFailed() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => paymentsApi.markPaymentFailed(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['bookings'] });
-      toast.error('Payment failed — please try again');
-    },
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 }

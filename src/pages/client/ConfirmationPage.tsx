@@ -1,89 +1,171 @@
-// src/pages/client/ConfirmationPage.tsx
-import { useParams, Link } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
-import { Button } from "../../components/ui/Button";
-import { getBookingById } from "../../api/bookings";
-import { getPaymentStatus } from "../../api/payments";
+import { useEffect, useRef } from 'react';
+import { Link, useParams } from 'react-router-dom';
+import { CheckCircle2, Clock, XCircle, AlertTriangle } from 'lucide-react';
+import { useBooking } from '../../hooks/usebookings';
+import { Spinner } from '../../components/ui/Spinner';
+
+function formatGHS(value: number): string {
+  return new Intl.NumberFormat('en-GH', {
+    style: 'currency',
+    currency: 'GHS',
+    minimumFractionDigits: 0,
+  }).format(value);
+}
 
 export function ConfirmationPage() {
   const { bookingId } = useParams<{ bookingId: string }>();
+  const id = bookingId ? Number(bookingId) : 0;
 
-  // Fetch booking details
-  const {
-    data: booking,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: ["booking", bookingId],
-    queryFn: () => getBookingById(bookingId!),
-    enabled: !!bookingId,
-  });
+  const { data: booking, isLoading, isError, refetch } = useBooking(id);
 
-  // Fetch payment status
-  const { data: paymentStatus } = useQuery({
-    queryKey: ["paymentStatus", bookingId],
-    queryFn: () => getPaymentStatus(bookingId!),
-    enabled: !!bookingId,
-  });
+  const paymentStatus = booking?.payment?.status;
+  const isPending = paymentStatus === 'PENDING';
 
-  if (isLoading) {
-    return <p className="text-center mt-10">Loading booking...</p>;
-  }
+  // Poll while payment is still pending — the Paystack webhook can lag
+  // a few seconds behind the redirect. We never treat the redirect itself
+  // as confirmation; only the backend payment record decides success.
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  useEffect(() => {
+    if (isPending) {
+      pollRef.current = setInterval(() => refetch(), 4000);
+    }
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [isPending, refetch]);
 
-  if (error || !booking) {
+  if (!bookingId) {
     return (
-      <div className="text-center mt-10">
-        <p className="text-red-600">Booking not found.</p>
-        <Link to="/book" className="text-blue-600 underline">
-          Return to booking
-        </Link>
+      <div className="confirmation-page">
+        <div className="confirmation-card">
+          <AlertTriangle size={40} className="confirmation-icon confirmation-icon--warning" />
+          <h1 className="confirmation-title">No booking reference found</h1>
+          <p className="confirmation-sub">
+            We couldn't find a booking to confirm. If you just completed a payment,
+            check "My Bookings" for the latest status.
+          </p>
+          <Link to="/my/bookings" className="btn btn--primary">View My Bookings</Link>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-6">
-      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md text-center">
-        <div className="w-20 h-20 mx-auto mb-6 flex items-center justify-center rounded-full bg-green-100 border-4 border-green-700 text-4xl">
-          ✓
+  if (isLoading) {
+    return (
+      <div className="confirmation-page">
+        <div className="spinner-overlay">
+          <Spinner size="lg" />
+          <p>Checking your booking…</p>
         </div>
+      </div>
+    );
+  }
 
-        <h1 className="text-2xl font-bold mb-2">Booking Confirmed!</h1>
-        <p className="text-gray-600 mb-6">
-          Your appointment at Locs Allure has been successfully booked.
-          We’ll send you a reminder before your appointment.
+  if (isError || !booking) {
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-card">
+          <XCircle size={40} className="confirmation-icon confirmation-icon--error" />
+          <h1 className="confirmation-title">Booking not found</h1>
+          <p className="confirmation-sub">
+            We couldn't load this booking. If you believe this is a mistake,
+            contact us with your booking reference.
+          </p>
+          <Link to="/my/bookings" className="btn btn--primary">View My Bookings</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Payment failed ──────────────────────────────────────────────────
+  if (paymentStatus === 'FAILED') {
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-card">
+          <XCircle size={40} className="confirmation-icon confirmation-icon--error" />
+          <h1 className="confirmation-title">Payment failed</h1>
+          <p className="confirmation-sub">
+            Your appointment was reserved but payment didn't go through.
+            You can try paying again from your bookings page.
+          </p>
+          <div className="confirmation-ref">
+            <div>Booking Reference</div>
+            <div className="confirmation-ref__id">#{booking.id}</div>
+          </div>
+          <Link to="/my/bookings" className="btn btn--primary">Go to My Bookings</Link>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Payment still pending / webhook lag ─────────────────────────────
+  if (isPending || !booking.payment) {
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-card">
+          <Clock size={40} className="confirmation-icon confirmation-icon--pending" />
+          <h1 className="confirmation-title">Confirming your payment…</h1>
+          <p className="confirmation-sub">
+            This usually takes a few seconds. This page will update automatically —
+            no need to refresh.
+          </p>
+          <div className="confirmation-ref">
+            <div>Booking Reference</div>
+            <div className="confirmation-ref__id">#{booking.id}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Confirmed ────────────────────────────────────────────────────────
+  const service = booking.appointment?.service;
+  const staff = booking.appointment?.staff;
+
+  return (
+    <div className="confirmation-page">
+      <div className="confirmation-card">
+        <CheckCircle2 size={40} className="confirmation-icon confirmation-icon--success" />
+        <h1 className="confirmation-title">Booking confirmed!</h1>
+        <p className="confirmation-sub">
+          Your appointment at Locs Allure has been booked and paid for.
+          We'll send you a reminder before your appointment.
         </p>
 
-        <div className="bg-gray-100 rounded-lg p-4 mb-6">
-          <p className="text-sm text-gray-500 mb-1">Booking Reference</p>
-          <p className="text-lg font-semibold text-gray-900">#{booking.id}</p>
+        <div className="confirmation-ref">
+          <div>Booking Reference</div>
+          <div className="confirmation-ref__id">#{booking.id}</div>
         </div>
 
-        <div className="space-y-3">
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Service:</span> {booking.service.name}
-          </p>
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Date:</span> {booking.slot.date}
-          </p>
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Time:</span> {booking.slot.time}
-          </p>
-          <p className="text-sm text-gray-700">
-            <span className="font-semibold">Payment Status:</span>{" "}
-            {paymentStatus?.status ?? "Pending"}
-          </p>
+        <div className="confirmation-details">
+          <div className="confirmation-details__row">
+            <span>Service</span>
+            <span>{service?.name ?? '—'}</span>
+          </div>
+          <div className="confirmation-details__row">
+            <span>Stylist</span>
+            <span>{staff?.user?.name ?? 'No preference'}</span>
+          </div>
+          <div className="confirmation-details__row">
+            <span>Date &amp; Time</span>
+            <span>
+              {booking.appointment?.date
+                ? new Date(booking.appointment.date).toLocaleString('en-GH', {
+                    weekday: 'short', month: 'short', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit',
+                  })
+                : '—'}
+            </span>
+          </div>
+          <div className="confirmation-details__row confirmation-details__row--total">
+            <span>Amount paid</span>
+            <span>{formatGHS(booking.payment.amount)}</span>
+          </div>
         </div>
 
-        <div className="mt-6 flex flex-col gap-3">
-          <Link to="/my/bookings">
-            <Button fullWidth size="lg">View My Bookings</Button>
-          </Link>
-          <Link to="/book">
-            <Button fullWidth variant="outline" size="md">
-              Book Another Appointment
-            </Button>
-          </Link>
+        <div className="confirmation-actions">
+          <Link to="/my/bookings" className="btn btn--primary btn--full">View My Bookings</Link>
+          <Link to="/book" className="btn btn--ghost btn--full">Book Another Appointment</Link>
         </div>
       </div>
     </div>
