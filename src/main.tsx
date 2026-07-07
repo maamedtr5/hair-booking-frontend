@@ -47,7 +47,7 @@ import UnauthorizedPage from "./pages/Unauthorizedpage";
 import { LandingPage } from "./pages/LandingPage";
 
 
-function Root() {
+export function Root() {
   const navigate = useNavigate();
   const { logout } = useAuthContext();
 
@@ -63,7 +63,7 @@ function Root() {
   return <Outlet />;
 }
 
-export const router = createBrowserRouter([
+const router = createBrowserRouter([
   {
     element: <Root />,
     children: [
