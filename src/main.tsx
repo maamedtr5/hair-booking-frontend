@@ -1,5 +1,5 @@
 // src/main.tsx
-import React, { useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import ReactDOM from "react-dom/client";
 import {
   RouterProvider,
@@ -15,37 +15,71 @@ import { useAuthContext } from "./hooks/useAuthcontext";
 import { ProtectedRoute } from "./router/ProtectedRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { AppToastContainer } from "./components/ui/AppToastContainer";
+import { Spinner } from "./components/ui/Spinner";
 import "./index.css";
 
-// Layouts
+// Layouts — kept eager. These are small and every portal needs its own
+// layout immediately on route entry; lazy-loading them would just add a
+// spinner flash with no real bundle-size win.
 import { AdminLayout } from "./components/layout/AdminLayout";
 import ClientLayout from "./components/layout/ClientLayout";
 import { StaffLayout } from "./components/layout/StaffLayout";
 
-// Auth pages
+
 import { LoginPage } from "./pages/auth/LoginPage";
 import { RegisterPage } from "./pages/auth/RegisterPage";
-
-// Client pages
-import { BookingPage } from "./pages/client/BookingPage";
-import { ConfirmationPage } from "./pages/client/ConfirmationPage";
-import { MyBookings } from "./pages/client/MyBookings";
-
-// Admin pages
-import Dashboard from "./pages/admin/Dashboard";
-import { Calendar } from "./pages/admin/Calendar";
-import { StaffPage } from "./pages/admin/Staff";
-import { Reports } from "./pages/admin/Reports";
-import { Settings } from "./pages/admin/Settings";
-
-// Staff pages
-import { StaffSchedule } from "./pages/staff/StaffSchedule";
-import { ClientNotes } from "./pages/staff/ClientNotes";
-
-
-import UnauthorizedPage from "./pages/Unauthorizedpage";
 import { LandingPage } from "./pages/LandingPage";
 
+import UnauthorizedPage from "./pages/Unauthorizedpage";
+
+
+const BookingPage = lazy(() =>
+  import("./pages/client/BookingPage").then((m) => ({ default: m.BookingPage }))
+);
+const ConfirmationPage = lazy(() =>
+  import("./pages/client/ConfirmationPage").then((m) => ({ default: m.ConfirmationPage }))
+);
+const MyBookings = lazy(() =>
+  import("./pages/client/MyBookings").then((m) => ({ default: m.MyBookings }))
+);
+
+
+const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
+const Calendar = lazy(() =>
+  import("./pages/admin/Calendar").then((m) => ({ default: m.Calendar }))
+);
+const StaffPage = lazy(() =>
+  import("./pages/admin/Staff").then((m) => ({ default: m.StaffPage }))
+);
+const Reports = lazy(() =>
+  import("./pages/admin/Reports").then((m) => ({ default: m.Reports }))
+);
+const Settings = lazy(() =>
+  import("./pages/admin/Settings").then((m) => ({ default: m.Settings }))
+);
+
+// ── Staff portal pages — lazy ───────────────────────────────────────────
+const StaffSchedule = lazy(() =>
+  import("./pages/staff/StaffSchedule").then((m) => ({ default: m.StaffSchedule }))
+);
+const ClientNotes = lazy(() =>
+  import("./pages/staff/ClientNotes").then((m) => ({ default: m.ClientNotes }))
+);
+
+// Shared fallback for every lazy route — reuses the same Spinner already
+// used elsewhere (e.g. LandingPage's services grid) instead of introducing
+// a second loading pattern.
+function RouteFallback() {
+  return (
+    <div className="spinner-overlay">
+      <Spinner size="lg" />
+    </div>
+  );
+}
+
+function withSuspense(element: React.ReactNode) {
+  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
+}
 
 export function Root() {
   const navigate = useNavigate();
@@ -72,16 +106,16 @@ const router = createBrowserRouter([
       { path: "/register", element: <RegisterPage /> },
       { path: "/",          element: <LandingPage /> },
 
- 
+      // Client portal — CLIENT role required.
       {
         element: <ProtectedRoute roles={["CLIENT"]} />,
         children: [
           {
             element: <ClientLayout />,
             children: [
-              { path: "/book",                              element: <BookingPage /> },
-              { path: "/my/bookings",                        element: <MyBookings /> },
-              { path: "/booking/confirmation/:bookingId",    element: <ConfirmationPage /> },
+              { path: "/book",                           element: withSuspense(<BookingPage />) },
+              { path: "/my/bookings",                     element: withSuspense(<MyBookings />) },
+              { path: "/booking/confirmation/:bookingId", element: withSuspense(<ConfirmationPage />) },
             ],
           },
         ],
@@ -94,11 +128,11 @@ const router = createBrowserRouter([
           {
             element: <AdminLayout />,
             children: [
-              { path: "/dashboard",           element: <Dashboard /> },
-              { path: "/dashboard/calendar",  element: <Calendar /> },
-              { path: "/dashboard/staff",     element: <StaffPage /> },
-              { path: "/dashboard/reports",   element: <Reports /> },
-              { path: "/dashboard/settings",  element: <Settings /> },
+              { path: "/dashboard",           element: withSuspense(<Dashboard />) },
+              { path: "/dashboard/calendar",  element: withSuspense(<Calendar />) },
+              { path: "/dashboard/staff",     element: withSuspense(<StaffPage />) },
+              { path: "/dashboard/reports",   element: withSuspense(<Reports />) },
+              { path: "/dashboard/settings",  element: withSuspense(<Settings />) },
             ],
           },
         ],
@@ -111,14 +145,13 @@ const router = createBrowserRouter([
           {
             element: <StaffLayout />,
             children: [
-              { path: "/staff/schedule",              element: <StaffSchedule /> },
-              { path: "/staff/clients/:clientId/notes", element: <ClientNotes /> },
+              { path: "/staff/schedule",                element: withSuspense(<StaffSchedule />) },
+              { path: "/staff/clients/:clientId/notes", element: withSuspense(<ClientNotes />) },
             ],
           },
         ],
       },
 
-   
       { path: "/unauthorized", element: <UnauthorizedPage /> },
 
       // 404 fallback

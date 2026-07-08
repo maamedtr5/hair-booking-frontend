@@ -5,39 +5,3 @@ Would you like me to also show you how to wire this into your frontend table pag
 
 
 
-iles to Manually Edit
-
-
-src/pages/admin/Settings.tsx
-
-Fix enum usage: replace NO_SHOW with RESCHEDULED
-
-Ensure dropdowns or status checks only use: PENDING, CONFIRMED, RESCHEDULED, CANCELLED, COMPLETED
-
-src/pages/admin/Service.tsx (or wherever services are rendered)
-
-Remove: category
-
-Keep: name, duration, price
-
-src/pages/admin/Appointment.tsx
-
-Remove direct appointment.client
-
-Replace with nested access: appointment.booking?.client
-
-Update props passed to components accordingly
-
-src/pages/admin/Slot.tsx
-
-Replace: isAvailable → isBooked
-
-Any User UI components
-
-Remove: phone, avatarUrl
-
-If you need phone, fetch via booking.client.phone
-
-Any Client UI components
-
-Remove: notes, preferences (not in schema)

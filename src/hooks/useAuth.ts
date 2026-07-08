@@ -8,4 +8,7 @@
 // though both were meant to expose the same thing.)
 //
 // Single source of truth: useAuthcontext.ts. Everything else is an alias.
-export { useAuthContext as useAuth } from './useAuthcontext';
+// Some files import `useAuth`, others import `useAuthContext` from this
+// module — both are re-exported here so either works, but both still
+// resolve to the exact same implementation, so they can't drift apart.
+export { useAuthContext, useAuthContext as useAuth } from './useAuthcontext';

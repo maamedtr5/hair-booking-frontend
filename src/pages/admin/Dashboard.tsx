@@ -99,6 +99,11 @@ function TodayRow({ appt }: { appt: Appointment }) {
   return (
     <button
       type="button"
+      // TODO: no appointment-detail page/route exists yet
+      // (/admin/appointments/:id has no matching page component or entry
+      // in main.tsx's router). This will 404 until that page is built and
+      // wired in — left as-is rather than guessing at a route that isn't
+      // there yet.
       onClick={() => navigate(`/admin/appointments/${appt.id}`)}
       className="today-row"
       aria-label={`View appointment for ${appt.booking?.client?.user?.name ?? 'client'}`}
@@ -258,6 +263,8 @@ export default function Dashboard() {
         <div className="dashboard__header-actions">
           <button
             type="button"
+            // TODO: /admin/appointments/new has no page/route yet — see
+            // TopRow's onClick note above, same underlying gap.
             onClick={() => navigate('/admin/appointments/new')}
             className="btn btn--primary"
           >
@@ -288,6 +295,7 @@ export default function Dashboard() {
           trend={pendingCount > 0 ? 'neutral' : undefined}
           icon={<AppointmentIcon />}
           isLoading={apptLoading}
+          // TODO: /admin/appointments has no page/route yet.
           onClick={() => navigate('/admin/appointments')}
         />
         <StatsCard
@@ -295,6 +303,8 @@ export default function Dashboard() {
           value={clientsLoading ? '…' : currentClients}
           icon={<ClientIcon />}
           isLoading={clientsLoading}
+          // TODO: ClientPage.tsx exists in the repo but isn't imported or
+          // routed in main.tsx yet — upload it and I'll wire the route.
           onClick={() => navigate('/admin/clients')}
         />
         <StatsCard
@@ -373,6 +383,7 @@ export default function Dashboard() {
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/><line x1="12" y1="14" x2="12" y2="18"/><line x1="10" y1="16" x2="14" y2="16"/>
                 </svg>
               }
+              // TODO: /admin/appointments/new has no page/route yet.
               onClick={() => navigate('/admin/appointments/new')}
               accent
             />
@@ -384,6 +395,7 @@ export default function Dashboard() {
                   <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/><line x1="12" y1="14" x2="12" y2="20"/><line x1="9" y1="17" x2="15" y2="17"/>
                 </svg>
               }
+              // TODO: ClientPage.tsx exists but isn't routed yet.
               onClick={() => navigate('/admin/clients/new')}
             />
             <QuickAction
@@ -394,6 +406,7 @@ export default function Dashboard() {
                   <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
                 </svg>
               }
+              // TODO: ServicePage.tsx exists but isn't routed yet.
               onClick={() => navigate('/admin/services')}
             />
             <QuickAction
@@ -404,7 +417,7 @@ export default function Dashboard() {
                   <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
                 </svg>
               }
-              onClick={() => navigate('/admin/reports')}
+              onClick={() => navigate('/dashboard/reports')}
             />
             <QuickAction
               label="Promo codes"
@@ -414,6 +427,7 @@ export default function Dashboard() {
                   <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>
                 </svg>
               }
+              // TODO: Promocodes.tsx exists but isn't routed yet.
               onClick={() => navigate('/admin/promo-codes')}
             />
             <QuickAction
@@ -424,7 +438,7 @@ export default function Dashboard() {
                   <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
               }
-              onClick={() => navigate('/admin/staff')}
+              onClick={() => navigate('/dashboard/staff')}
             />
           </div>
         </section>
@@ -435,6 +449,7 @@ export default function Dashboard() {
             <h2 className="dashboard__section-title">Recent appointments</h2>
             <button
               type="button"
+              // TODO: /admin/appointments has no page/route yet.
               onClick={() => navigate('/admin/appointments')}
               className="dashboard__see-all"
             >
