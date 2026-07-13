@@ -3,7 +3,8 @@ import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Scissors } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { Button } from '../ui/Button';
-import '../../styles/layout/navbar.css';
+
+
 
 interface NavbarProps {
   variant?: 'public' | 'client' | 'staff' | 'admin';

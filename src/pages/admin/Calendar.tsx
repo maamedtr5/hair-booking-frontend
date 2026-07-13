@@ -17,7 +17,6 @@ import {
 } from '../../utils/formatDate';
 import { formatGHS } from '../../utils/formatCurrency';
 import type { Appointment, AppointmentStatus } from '../../types/models';
-import '../../styles/layout/PageStyles/CalenderStyles.css';
 
 const STATUS_FILTERS: { label: string; value: AppointmentStatus | 'ALL' }[] = [
   { label: 'All', value: 'ALL' },

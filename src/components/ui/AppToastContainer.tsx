@@ -8,16 +8,6 @@ const ICONS: Record<ToastType, typeof CheckCircle2> = {
   warning: AlertTriangle,
 };
 
-/**
- * Renders toasts pushed via useUiStore (the addToast / toast.success() /
- * toast.error() calls used throughout the app's mutation hooks).
- *
- * This replaces react-toastify's <ToastContainer /> in main.tsx — the app
- * uses its own Zustand-based toast store, not react-toastify, so mounting
- * react-toastify's container alone renders nothing. Mount THIS instead.
- * react-toastify can be removed as a dependency once this is confirmed
- * working, unless something else in the codebase still calls its toast().
- */
 export function AppToastContainer() {
   const toasts = useUiStore((s) => s.toasts);
   const removeToast = useUiStore((s) => s.removeToast);

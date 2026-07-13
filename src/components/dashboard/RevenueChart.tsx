@@ -11,7 +11,7 @@ import {
 } from 'recharts';
 import { useRevenueReport } from '../../hooks/useReports';
 import { Spinner } from '../ui/Spinner';
-import '../../styles/layout/DashboardStyles/RevenueChart.css'
+
 
 type Period = '7d' | '30d' | '90d' | '12m';
 

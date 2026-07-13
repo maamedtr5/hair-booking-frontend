@@ -3,7 +3,7 @@ import { useServices } from '../../hooks/useServices';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import type { Service } from '../../types';
-import '../../styles/layout/BookingStyles/ServiceSelector.css';
+ 
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('en-GH', {

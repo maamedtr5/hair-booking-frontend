@@ -132,29 +132,7 @@ export default function NotificationsPage() {
     </div>
       )}
 
-      <style>{`
-        .notif-page{display:flex;flex-direction:column;gap:1.5rem;padding:1.75rem 2rem;max-width:700px;margin:0 auto}
-        .notif-page__header{display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:1rem}
-        .notif-page__title{font-family:var(--font-display,'Cormorant Garamond',serif);font-size:1.75rem;font-weight:600;color:var(--color-espresso,#2c1a0e);margin:0}
-        .notif-page__sub{font-family:var(--font-body,'DM Sans',sans-serif);font-size:.875rem;color:var(--color-text-muted,#9a8e82);margin:.25rem 0 0}
-        .notif-page__state,.notif-page__empty{display:flex;flex-direction:column;align-items:center;gap:.75rem;padding:4rem;color:var(--color-text-muted,#9a8e82);font-family:var(--font-body,'DM Sans',sans-serif);font-size:.9375rem}
-        .notif-list{display:flex;flex-direction:column;gap:.5rem}
-        .notif-item{display:flex;align-items:flex-start;gap:.875rem;padding:1rem 1.25rem;background:var(--color-surface,#faf8f5);border:1px solid var(--color-border,#e5e0d8);border-radius:12px;transition:background .12s}
-        .notif-item--unread{border-left:3px solid var(--color-gold,#c9a96e);background:color-mix(in srgb,var(--color-gold,#c9a96e) 4%,var(--color-surface,#faf8f5))}
-        .notif-item__icon{font-size:1.25rem;flex-shrink:0;margin-top:.1rem}
-        .notif-item__body{flex:1;min-width:0;display:flex;flex-direction:column;gap:.25rem}
-        .notif-item__message{font-family:var(--font-body,'DM Sans',sans-serif);font-size:.9rem;color:var(--color-text,#1a1108);margin:0;line-height:1.5}
-        .notif-item--unread .notif-item__message{font-weight:500}
-        .notif-item__time{font-family:var(--font-body,'DM Sans',sans-serif);font-size:.8rem;color:var(--color-text-muted,#9a8e82)}
-        .notif-item__read-btn,.notif-item__del-btn{flex-shrink:0;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border:none;background:transparent;border-radius:6px;cursor:pointer;color:var(--color-text-muted,#9a8e82);transition:background .12s,color .12s}
-        .notif-item__read-btn:hover{background:color-mix(in srgb,#22c55e 15%,transparent);color:#16a34a}
-        .notif-item__del-btn:hover{background:color-mix(in srgb,#ef4444 15%,transparent);color:#dc2626}
-        .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.6875rem 1.25rem;border-radius:10px;font-family:var(--font-body,'DM Sans',sans-serif);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .18s;border:none;white-space:nowrap}
-        .btn--ghost{background:transparent;border:1px solid var(--color-border,#e5e0d8);color:var(--color-espresso,#2c1a0e)}
-        .btn--ghost:hover{background:var(--color-border,#e5e0d8)}
-        .btn--sm{padding:.4375rem .875rem;font-size:.8125rem}
-        @media(max-width:780px){.notif-page{padding:1.25rem 1rem}}
-      `}</style>
+      
     </div>
   );
 }

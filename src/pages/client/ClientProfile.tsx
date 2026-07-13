@@ -266,41 +266,7 @@ export default function ClientProfile() {
           </form>
         </ProfileSection>
       )}
- <style>{`
-        .client-profile { display:flex;flex-direction:column;gap:1.75rem;padding:1.75rem 1.25rem;max-width:600px;margin:0 auto; }
-        /* Hero */
-        .client-profile__hero { display:flex;align-items:center;gap:1.125rem; }
-        .client-profile__avatar { width:64px;height:64px;border-radius:50%;background:color-mix(in srgb,var(--color-gold,#c9a96e) 20%,var(--color-surface,#faf8f5));display:flex;align-items:center;justify-content:center;font-family:var(--font-display,'Cormorant Garamond',serif);font-size:1.5rem;font-weight:700;color:var(--color-espresso,#2c1a0e);border:2.5px solid var(--color-border,#e5e0d8);flex-shrink:0; }
-        .client-profile__name { font-family:var(--font-display,'Cormorant Garamond',serif);font-size:1.5rem;font-weight:600;color:var(--color-espresso,#2c1a0e);margin:0; }
-        .client-profile__email { font-family:var(--font-body,'DM Sans',sans-serif);font-size:.875rem;color:var(--color-text-muted,#9a8e82);margin:.2rem 0 0; }
-        /* Tabs */
-        .client-profile__tabs { display:flex;gap:.25rem;background:var(--color-border,#e5e0d8);border-radius:10px;padding:3px;align-self:flex-start; }
-        .client-profile__tab { padding:.4rem .875rem;border-radius:7px;border:none;background:transparent;font-family:var(--font-body,'DM Sans',sans-serif);font-size:.875rem;font-weight:500;color:var(--color-text-muted,#9a8e82);cursor:pointer;transition:all .15s;white-space:nowrap; }
-        .client-profile__tab--active { background:var(--color-surface,#faf8f5);color:var(--color-espresso,#2c1a0e);font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,.08); }
-        /* Section */
-        .profile-section { background:var(--color-surface,#faf8f5);border:1px solid var(--color-border,#e5e0d8);border-radius:14px;padding:1.5rem;display:flex;flex-direction:column;gap:1.125rem; }
-        .profile-section__title { font-family:var(--font-body,'DM Sans',sans-serif);font-size:1rem;font-weight:700;color:var(--color-espresso,#2c1a0e);margin:0; }
-        .profile-section__body { display:flex;flex-direction:column;gap:1rem; }
-        /* Form */
-        .profile-form { display:flex;flex-direction:column;gap:1rem; }
-        .profile-form__field { display:flex;flex-direction:column;gap:.375rem; }
-        .profile-form__labe l { font-family:var(--font-body,'DM Sans',sans-serif);font-size:.875rem;font-weight:600;color:var(--color-espresso,#2c1a0e); }
-        .profile-form__input { padding:.625rem .875rem;background:var(--color-bg,#fff);border:1px solid var(--color-border,#e5e0d8);border-radius:8px;font-family:var(--font-body,'DM Sans',sans-serif);font-size:.9375rem;color:var(--color-text,#1a1108);transition:border-color .15s;width:100%; }
-        .profile-form__input:focus { outline:none;border-color:var(--color-gold,#c9a96e);box-shadow:0 0 0 3px color-mix(in srgb,var(--color-gold,#c9a96e) 14%,transparent); }
-        .profile-form__input--error { border-color:#dc2626; }
-        .profile-form__input--disabled { background:color-mix(in srgb,var(--color-border,#e5e0d8) 40%,var(--color-bg,#fff));cursor:not-allowed;color:var(--color-text-muted,#9a8e82); }
-        .profile-form__hint { font-family:var(--font-body,'DM Sans',sans-serif);font-size:.8rem;color:var(--color-text-muted,#9a8e82);margin:0; }
-        .profile-form__error { font-size:.8rem;color:#dc2626;font-weight:500;margin:0; }
-        .profile-form__actions { display:flex;justify-content:flex-start;padding-top:.25rem; }
-        .client-profile__loading { display:flex;justify-content:center;padding:2rem; }
-        .client-profile__no-client { font-family:var(--font-body,'DM Sans',sans-serif);font-size:.9375rem;color:var(--color-text-muted,#9a8e82); }
-        /* Buttons */
-        .btn { display:inline-flex;align-items:center;gap:.5rem;padding:.6875rem 1.25rem;border-radius:10px;font-family:var(--font-body,'DM Sans',sans-serif);font-size:.9rem;font-weight:600;cursor:pointer;transition:all .18s;border:none;white-space:nowrap; }
-        .btn--primary { background:var(--color-espresso,#2c1a0e);color:var(--color-cream,#faf8f5); }
-        .btn--primary:hover:not(:disabled) { background:color-mix(in srgb,var(--color-espresso,#2c1a0e) 85%,var(--color-gold,#c9a96e)); }
-        .btn--primary:disabled { opacity:.45;cursor:not-allowed; }
-        @media(max-width:480px){ .client-profile{padding:1.25rem .875rem;} }
-      `}</style>                                                   
+                        
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useAvailableSlots } from '../../hooks/useSlots';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import type { Slot } from '../../types';
-import '../../styles/layout/BookingStyles/SlotCalender.css';
+ 
 
 const DAYS   = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const MONTHS = [

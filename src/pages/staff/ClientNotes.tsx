@@ -10,7 +10,7 @@ import { formatDateTime } from '../../utils/formatDate';
 import { toast } from '../../store/uiStore';
 import { getErrorMessage } from '../../utils/apiClient';
 import type { Client, Appointment } from '../../types/models';
-import '../../styles/layout/PageStyles/ClientNoteStyles.css';
+ 
 
 // ── Loader shell ───────────────────────────────────────────────────────────────
 // Fetches data and renders a spinner until both client + appointments arrive,

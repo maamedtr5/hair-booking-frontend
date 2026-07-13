@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { useConsentForm } from '../../hooks/useConsentForm';
-import "../../styles/layout/FormStyles/ConsentForm.css";
+
 
 interface ConsentItem {
   id: string;

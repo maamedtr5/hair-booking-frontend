@@ -7,7 +7,7 @@ import { Button } from '../../components/ui/Button';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { formatDateTime, formatAppointmentDate, formatDuration, isUpcoming, } from '../../utils/formatDate';
 import { formatGHS } from '../../utils/formatCurrency';
-import "../../styles/layout/PageStyles/StaffScheduleStyle.css";
+ 
 
 
 function toYMD(date: Date) { return date.toISOString().split('T')[0]; }
