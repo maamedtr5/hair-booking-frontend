@@ -362,3 +362,14 @@ export interface ConsentForm {
   date: string;
   client?: Client;
 }
+export interface CreateAppointmentPayload {
+  serviceId: number;
+  staffId?: number;
+  date: string;
+  notes?: string;
+  status?: AppointmentStatus;
+  // Required only when booking without being logged in.
+  guestName?: string;
+  guestEmail?: string;
+  guestPhone?: string;
+}
