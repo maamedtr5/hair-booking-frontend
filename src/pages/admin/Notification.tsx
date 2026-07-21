@@ -1,11 +1,10 @@
 // pages/admin/NotificationsPage.tsx
 import { useMemo } from 'react';
-import { useNotifications, useMarkAllRead, useBulkMarkRead, useDeleteNotification } from '../../hooks/useNotifications';
+import { useNotifications, useMarkAllRead, useMarkRead, useDeleteNotification } from '../../hooks/useNotifications';
 import { useAuthContext } from '../../hooks/useAuthcontext';
 import { Spinner } from '../../components/ui/Spinner';
 import { useUIStore } from '../../store/uiStore';
 import type { AppNotification } from '../../types/models';
-
 
 function timeAgo(iso: string): string {
   const diff = Date.now() - new Date(iso).getTime();
@@ -17,33 +16,41 @@ function timeAgo(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GH', { month: 'short', day: 'numeric' });
 }
 
+// Matches the real NotificationType enum in schema.prisma
+// (GENERAL | APPOINTMENT | PAYMENT | PROMOTION | SYSTEM).
 const TYPE_ICONS: Record<string, string> = {
-  APPOINTMENT_REMINDER: '📅',
-  APPOINTMENT_CONFIRMED: '✅',
-  APPOINTMENT_CANCELLED: '❌',
-  PAYMENT_RECEIVED: '💳',
-  NEW_BOOKING: '🆕',
+  APPOINTMENT: '📅',
+  PAYMENT: '💳',
+  PROMOTION: '🏷️',
+  SYSTEM: '⚙️',
+  GENERAL: '🔔',
 };
 
 export default function NotificationsPage() {
   const { user } = useAuthContext();
   const { addToast } = useUIStore();
-  const { data: notifications, isLoading } =useNotifications(user?.id ?? 0);
+  const { data: notifications, isLoading } = useNotifications(user?.id ?? 0);
   const markAllRead = useMarkAllRead();
-  const bulkMarkRead = useBulkMarkRead();
+  const markRead = useMarkRead();
   const deleteNotif = useDeleteNotification();
 
   const unreadIds = useMemo(
     () => (notifications ?? [])
-  .filter((n) => !n.read)
-  .map((n) => n.id),
-[notifications]
-  )
+      .filter((n) => !n.read)
+      .map((n) => n.id),
+    [notifications]
+  );
+
   async function handleMarkAll() {
     try {
       await markAllRead.mutateAsync(user!.id);
       addToast({ type: 'success', message: 'All notifications marked as read.' });
     } catch { addToast({ type: 'error', message: 'Failed to mark all read.' }); }
+  }
+
+  async function handleMarkRead(id: number) {
+    try { await markRead.mutateAsync(id); }
+    catch { addToast({ type: 'error', message: 'Failed to mark as read.' }); }
   }
 
   async function handleDelete(id: number) {
@@ -73,66 +80,47 @@ export default function NotificationsPage() {
           <p>You're all caught up.</p>
         </div>
       ) : (
+        <div className="notif-list">
+          {(notifications ?? []).map((n) => (
+            <div
+              key={n.id}
+              className={`notif-item ${!n.read ? 'notif-item--unread' : ''}`}
+            >
+              <span className="notif-item__icon" aria-hidden="true">
+                {TYPE_ICONS[(n as AppNotification).type] ?? '🔔'}
+              </span>
+              <div className="notif-item__body">
+                <p className="notif-item__message">{n.message}</p>
+                <span className="notif-item__time">{timeAgo((n as AppNotification).createdAt)}</span>
+              </div>
 
-
-    <div className="notif-list">
-  {(notifications ?? []).map((n) => (
-    <div
-      key={n.id}
-      className={`notif-item ${!n.read ? 'notif-item--unread' : ''}`}
-    >
-    <span className="notif-item__icon" aria-hidden="true">
-  {TYPE_ICONS[(n as AppNotification).type] ?? '🔔'}
-</span>
-<div className="notif-item__body">
-  <p className="notif-item__message">{n.message}</p>
-  <span className="notif-item__time">{timeAgo((n as AppNotification).createdAt)}</span>
-</div>
-
-
-      {!n.read && (
-        <button
-          type="button"
-          onClick={() => bulkMarkRead.mutateAsync([n.id])}
-          className="notif-item__read-btn"
-          aria-label="Mark as read"
-        >
-          <svg
-            width="14"
-            height="14"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-          >
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        </button>
+              {!n.read && (
+                <button
+                  type="button"
+                  onClick={() => handleMarkRead(n.id)}
+                  className="notif-item__read-btn"
+                  aria-label="Mark as read"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                    <polyline points="20 6 9 17 4 12" />
+                  </svg>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => handleDelete(n.id)}
+                className="notif-item__del-btn"
+                aria-label="Delete notification"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            </div>
+          ))}
+        </div>
       )}
-      <button
-        type="button"
-        onClick={() => handleDelete(n.id)}
-        className="notif-item__del-btn"
-        aria-label="Delete notification"
-      >
-        <svg
-          width="13"
-          height="13"
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-        >
-          <line x1="18" y1="6" x2="6" y2="18" />
-          <line x1="6" y1="6" x2="18" y2="18" />
-        </svg>
-      </button>
-    </div>
-  ))}
-    </div>
-      )}
-
-      
     </div>
   );
 }

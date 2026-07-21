@@ -7,9 +7,33 @@ import { useAuth } from '../../hooks/useAuth';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { getErrorMessage } from '../../utils/apiClient';
+import type { Role } from '../../types/models';
+
+const ROLE_HOME: Record<Role, string> = {
+  ADMIN: '/dashboard',
+  STAFF: '/staff/dashboard',
+  CLIENT: '/my/bookings',
+};
+
+// Prefixes each role is actually allowed into — must mirror ProtectedRoute's
+// route groups in main.tsx. Used to sanity-check `from` before honoring it,
+// so we never bounce a user into a portal ProtectedRoute will just reject.
+const ROLE_ALLOWED_PREFIXES: Record<Role, string[]> = {
+  ADMIN: ['/dashboard'],
+  STAFF: ['/staff'],
+  CLIENT: ['/book', '/my', '/booking'],
+};
+
+function resolveRedirect(role: Role, from?: string): string {
+  const home = ROLE_HOME[role];
+  if (!from) return home;
+  const allowed = ROLE_ALLOWED_PREFIXES[role] ?? [];
+  const isAllowed = allowed.some((p) => from === p || from.startsWith(`${p}/`));
+  return isAllowed ? from : home;
+}
 
 export function LoginPage() {
-  const { login } = useAuth(); 
+  const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
@@ -26,16 +50,8 @@ export function LoginPage() {
   const onSubmit = async (values: LoginFormValues) => {
     setServerError('');
     try {
-      
-        const user = (await login(values)) as { role?: string } | null;
-      const dest =
-        from ??
-        (user?.role === 'ADMIN'
-          ? '/dashboard'
-          : user?.role === 'STAFF'
-          ? '/staff/schedule'
-          : '/my/bookings');
-
+      const user = await login(values);
+      const dest = resolveRedirect(user.role as Role, from);
       navigate(dest, { replace: true });
     } catch (err) {
       setServerError(getErrorMessage(err));
@@ -43,7 +59,6 @@ export function LoginPage() {
   };
 
   return (
-      
     <div className="auth-page">
       {/* Hero panel */}
       <div className="auth-hero">
@@ -124,4 +139,3 @@ export function LoginPage() {
     </div>
   );
 }
-

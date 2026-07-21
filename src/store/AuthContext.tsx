@@ -6,7 +6,7 @@ import {
   useEffect,
   type ReactNode,
 } from "react";
-import { login as apiLogin, register as apiRegister } from "../api/auth";
+import { login as apiLogin, register as apiRegister , logoutRequest, logoutAllRequest} from "../api/auth";
 import * as usersApi from "../api/users";
 import { loadStoredUser } from "../utils/authStorage";
 import type { AuthUser, LoginPayload, RegisterPayload } from "../types/models";
@@ -19,6 +19,7 @@ interface AuthContextValue {
   login: (payload: LoginPayload) => Promise<AuthUser>;
   register: (payload: RegisterPayload) => Promise<AuthUser>;
   logout: () => void;
+  logoutAllDevices: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -27,12 +28,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(() => loadStoredUser());
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing] = useState(false);
-
   const logout = useCallback(() => {
+    logoutRequest();
     localStorage.removeItem("auth_token");
     localStorage.removeItem("auth_user");
     setUser(null);
   }, []);
+  const logoutAllDevices = useCallback(async () => {
+  await logoutAllRequest();
+  localStorage.removeItem("auth_token");
+  localStorage.removeItem("auth_user");
+  setUser(null);
+}, []);
 
   useEffect(() => {
     // Listen for logout events from apiClient
@@ -90,6 +97,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         register,
         logout,
+        logoutAllDevices
       }}
     >
       {children}

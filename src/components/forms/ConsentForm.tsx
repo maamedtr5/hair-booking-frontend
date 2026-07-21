@@ -42,9 +42,13 @@ const CONSENT_ITEMS: ConsentItem[] = [
 ];
 
 interface ConsentFormProps {
-  clientId: number;
+  /** Omit for guest checkout — no Client row exists yet at this step.
+   *  Consent is still captured locally and submitted by BookingPage once
+   *  the guest's client record exists. */
+  clientId?: number;
   onComplete?: (consents: Record<string, boolean>) => void;
 }
+
 
 export function ConsentForm({ clientId, onComplete }: ConsentFormProps) {
   const { consentData, setConsentData } = useBookingFlowStore();
@@ -75,7 +79,15 @@ export function ConsentForm({ clientId, onComplete }: ConsentFormProps) {
   async function handleSubmit() {
     setSubmitted(true);
     if (!allRequired) return;
+       setConsentData(checked);
 
+    // Guest checkout: no Client record exists yet, so there's nothing to
+    // attach consent to. It's stored in the booking flow store above and
+    // BookingPage submits it for real once the guest's client is created.
+    if (!clientId) {
+      onComplete?.(checked);
+      return;
+    }
     try {
       await consentFormMutation.mutateAsync({
         clientId,
@@ -178,12 +190,13 @@ export function ConsentForm({ clientId, onComplete }: ConsentFormProps) {
         </p>
       )}
 
-      <button
+     <button
         type="button"
         onClick={handleSubmit}
+        disabled={consentFormMutation.isPending}
         className="btn btn--primary consent-form__submit"
       >
-        Accept &amp; continue
+        {consentFormMutation.isPending ? 'Saving…' : 'Accept & continue'}
       </button>
     </div>
   );

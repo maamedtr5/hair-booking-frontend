@@ -1,15 +1,13 @@
-import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useState } from 'react';
 import { useAuthContext } from '../../hooks/useAuth';
 import { useUpdateUser } from '../../hooks/useUsers';
-import { useClient, useUpdateClient } from '../../hooks/useClients';
+import { useClientByUserId, useUpdateClient } from '../../hooks/useClients';
 import { useUIStore } from '../../store/uiStore';
 import { IntakeForm } from '../../components/forms/IntakeForm';
 import { Spinner } from '../../components/ui/Spinner';
-
-
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 const profileSchema = z.object({
@@ -44,7 +42,6 @@ function ProfileSection({ title, children }: { title: string; children: React.Re
   );
 }
 
-
 // ─── Main Page ────────────────────────────────────────────────────────────────
 
 export default function ClientProfile() {
@@ -53,15 +50,15 @@ export default function ClientProfile() {
   const updateUser = useUpdateUser();
   const updateClient = useUpdateClient();
 
-  // ✅ use client relation from AuthUser
-  const clientId = user?.id;
-  const { data: clientProfile, isLoading: clientLoading } = useClient(clientId ?? 0);
+  const { data: clientProfile, isLoading: clientLoading } = useClientByUserId(user?.id);
 
   const [activeTab, setActiveTab] = useState<'profile' | 'intake' | 'password'>('profile');
 
   // ── User profile form ──
   const {
+    register: registerProfile,
     handleSubmit: handleProfile,
+    formState: { errors: profileErrors, isSubmitting: profileSubmitting },
   } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
     defaultValues: { name: user?.name ?? '' },
@@ -75,12 +72,15 @@ export default function ClientProfile() {
       addToast({ type: 'error', message: 'Update failed. Please try again.' });
     }
   }
+
   // ── Client phone form ──
   const {
+    register: registerClient,
     handleSubmit: handleClient,
+    formState: { errors: clientErrors, isSubmitting: clientSubmitting },
   } = useForm<ClientFormValues>({
     resolver: zodResolver(clientSchema),
-    defaultValues: { phone: clientProfile?.phone ?? '' },
+    values: { phone: clientProfile?.phone ?? '' }, // reactive — updates once clientProfile loads
   });
 
   async function onClientSubmit(values: ClientFormValues) {
@@ -157,16 +157,66 @@ export default function ClientProfile() {
       {/* Profile */}
       {activeTab === 'profile' && (
         <ProfileSection title="Personal information">
-          {/* User form */}
           <form onSubmit={handleProfile(onProfileSubmit)} noValidate className="profile-form">
-            {/* Name + Email fields */}
-            {/* ... unchanged markup ... */}
+            <div className="profile-form__field">
+              <label htmlFor="name" className="profile-form__label">Full name</label>
+              <input
+                id="name"
+                type="text"
+                {...registerProfile('name')}
+                className={`profile-form__input ${profileErrors.name ? 'profile-form__input--error' : ''}`}
+              />
+              {profileErrors.name && <p className="profile-form__error">{profileErrors.name.message}</p>}
+            </div>
+
+            <div className="profile-form__field">
+              <label className="profile-form__label">Email address</label>
+              <input
+                type="email"
+                value={user?.email ?? ''}
+                disabled
+                className="profile-form__input profile-form__input--disabled"
+              />
+              <p className="profile-form__hint">Contact support to change your email.</p>
+            </div>
+
+            <div className="profile-form__actions">
+              <button type="submit" disabled={profileSubmitting} className="btn btn--primary">
+                {profileSubmitting ? (
+                  <>
+                    <Spinner size="sm" /> Saving…
+                  </>
+                ) : (
+                  'Save changes'
+                )}
+              </button>
+            </div>
           </form>
 
-          {/* Client form */}
           <form onSubmit={handleClient(onClientSubmit)} noValidate className="profile-form">
-            {/* Phone field */}
-            {/* ... unchanged markup ... */}
+            <div className="profile-form__field">
+              <label htmlFor="phone" className="profile-form__label">Phone number</label>
+              <input
+                id="phone"
+                type="tel"
+                {...registerClient('phone')}
+                placeholder="+233 123 456 789"
+                className={`profile-form__input ${clientErrors.phone ? 'profile-form__input--error' : ''}`}
+              />
+              {clientErrors.phone && <p className="profile-form__error">{clientErrors.phone.message}</p>}
+            </div>
+
+            <div className="profile-form__actions">
+              <button type="submit" disabled={clientSubmitting || clientLoading} className="btn btn--primary">
+                {clientSubmitting ? (
+                  <>
+                    <Spinner size="sm" /> Saving…
+                  </>
+                ) : (
+                  'Update phone'
+                )}
+              </button>
+            </div>
           </form>
         </ProfileSection>
       )}
@@ -196,7 +246,6 @@ export default function ClientProfile() {
       {activeTab === 'password' && (
         <ProfileSection title="Change password">
           <form onSubmit={handlePassword(onPasswordSubmit)} noValidate className="profile-form">
-            {/* Current password */}
             <div className="profile-form__field">
               <label htmlFor="currentPassword" className="profile-form__label">
                 Current password *
@@ -214,7 +263,6 @@ export default function ClientProfile() {
               )}
             </div>
 
-            {/* New password */}
             <div className="profile-form__field">
               <label htmlFor="newPassword" className="profile-form__label">
                 New password *
@@ -233,7 +281,6 @@ export default function ClientProfile() {
               <p className="profile-form__hint">Minimum 8 characters.</p>
             </div>
 
-            {/* Confirm password */}
             <div className="profile-form__field">
               <label htmlFor="confirmPassword" className="profile-form__label">
                 Confirm new password *
@@ -251,7 +298,6 @@ export default function ClientProfile() {
               )}
             </div>
 
-            {/* Actions */}
             <div className="profile-form__actions">
               <button type="submit" disabled={pwSubmitting} className="btn btn--primary">
                 {pwSubmitting ? (
@@ -266,7 +312,6 @@ export default function ClientProfile() {
           </form>
         </ProfileSection>
       )}
-                        
     </div>
   );
 }

@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { useAuthContext } from '../../hooks/useAuthcontext';
 import { useCreateAppointment } from '../../hooks/useAppointments';
-import { useCreateBooking } from '../../hooks/usebookings';
 import { useInitializePayment } from '../../hooks/usePayments';
+import { useConsentForm } from '../../hooks/useConsentForm';
 import { ServiceSelector } from '../../components/booking/ServiceSelector';
 import { StaffPicker } from '../../components/booking/StaffPicker';
 import { SlotCalender } from '../../components/booking/SlotCalender';
@@ -30,23 +30,29 @@ const STEPS = [
 
 export function BookingPage() {
   const navigate = useNavigate();
-  const { user } = useAuthContext();
+  const { user, isAuthenticated } = useAuthContext();
   const {
     step, nextStep, prevStep,
     selectedService, selectedStaff, selectedSlot,
     notes, setNotes,
+    consentData,
     reset,
   } = useBookingFlowStore();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('MOBILE_MONEY');
   const [submitting, setSubmitting] = useState(false);
 
-  const createAppointment = useCreateAppointment();
-  const createBooking = useCreateBooking();
-  const initPayment = useInitializePayment();
+  // Guest checkout fields — only used when !isAuthenticated
+  const [guestName, setGuestName] = useState('');
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestPhone, setGuestPhone] = useState('');
 
-  
+  const createAppointment = useCreateAppointment();
+  const initPayment = useInitializePayment();
+  const consentFormMutation = useConsentForm();
+
   const clientId = user?.client?.id;
+  const guestFieldsComplete = guestName.trim() && guestEmail.trim() && guestPhone.trim();
 
   const canProceedFromStep1 = !!selectedService;
   const canProceedFromStep2 = !!selectedSlot; // staff is optional ("no preference")
@@ -56,37 +62,72 @@ export function BookingPage() {
       toast.error('Please complete all booking steps.');
       return;
     }
-    if (!clientId) {
+
+    let payEmail: string | undefined;
+
+    if (!isAuthenticated) {
+      if (!guestFieldsComplete) {
+        toast.error('Please fill in your name, email, and phone to continue.');
+        return;
+      }
+      payEmail = guestEmail.trim();
+    } else if (!clientId) {
       toast.error('Your account is missing a client profile. Please contact support.');
       return;
-    }
-    if (!user?.email) {
+    } else if (!user?.email) {
       toast.error('Your account is missing an email address for payment.');
       return;
+    } else {
+      payEmail = user.email;
     }
 
     setSubmitting(true);
     try {
-      // 1. Create the appointment
+      // The backend creates the Appointment AND its Booking together in one
+      // transaction (Booking.appointmentId is unique — a second, separate
+      // "create booking" call would always fail). For guests, it also
+      // creates the User + Client behind the scenes from guestName/
+      // guestEmail/guestPhone — no clientId needed up front.
       const appointment = await createAppointment.mutateAsync({
         serviceId: selectedService.id,
         staffId:   selectedStaff?.id,
         date:      selectedSlot.startTime,
         notes:     notes || undefined,
+        ...(!isAuthenticated
+          ? {
+              guestName: guestName.trim(),
+              guestEmail: guestEmail.trim(),
+              guestPhone: guestPhone.trim(),
+            }
+          : {}),
       });
 
-      // 2. Wrap it in a booking tied to this client
-      const booking = await createBooking.mutateAsync({
-        appointmentId: appointment.id,
-        clientId,
-      });
+      const booking = appointment.booking;
+      if (!booking) {
+        throw new Error('Booking could not be confirmed. Please try again.');
+      }
 
-      // 3. Initialise payment — Paystack returns a redirect URL
+      // Guests couldn't submit consent at step 3 (no Client existed yet).
+      // Their consent choices are sitting in the booking flow store —
+      // submit them now against the client the call above just created.
+      if (!isAuthenticated && consentData) {
+        try {
+          await consentFormMutation.mutateAsync({
+            clientId: booking.clientId,
+            consentGiven: true,
+            signature: JSON.stringify(consentData),
+          });
+        } catch {
+          toast.error('Booking confirmed, but we could not save your consent record. Our team will follow up.');
+        }
+      }
+
+      // Initialise payment — Paystack returns a redirect URL
       const paymentRes = await initPayment.mutateAsync({
         bookingId: booking.id,
         amount:    selectedService.price,
         method:    paymentMethod,
-        email:     user.email,
+        email:     payEmail!,
       });
 
       reset(); // clear booking flow state — the flow is complete
@@ -142,11 +183,11 @@ export function BookingPage() {
           </div>
         )}
 
-        {step === 3 && clientId && (
+        {step === 3 && (!isAuthenticated || clientId) && (
           <ConsentForm clientId={clientId} onComplete={() => nextStep()} />
         )}
 
-        {step === 3 && !clientId && (
+        {step === 3 && isAuthenticated && !clientId && (
           <div className="booking-empty-state">
             <p>Your account doesn't have a client profile yet. Please contact support to complete your booking.</p>
           </div>
@@ -186,6 +227,47 @@ export function BookingPage() {
               </div>
             </div>
 
+            {!isAuthenticated && (
+              <div className="booking-guest-fields">
+                <h2 className="section-title">Your details</h2>
+                <div className="form-field">
+                  <label htmlFor="guestName" className="form-label">Full name</label>
+                  <input
+                    id="guestName"
+                    className="form-input"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder="Your full name"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="guestEmail" className="form-label">Email address</label>
+                  <input
+                    id="guestEmail"
+                    type="email"
+                    className="form-input"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    placeholder="you@example.com"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="guestPhone" className="form-label">Phone number</label>
+                  <input
+                    id="guestPhone"
+                    type="tel"
+                    className="form-input"
+                    value={guestPhone}
+                    onChange={(e) => setGuestPhone(e.target.value)}
+                    placeholder="+233 123 456 789"
+                  />
+                </div>
+                <p className="booking-guest-note">
+                  Booking as a guest. Already have an account? <Link to="/login">Sign in</Link> for faster checkout.
+                </p>
+              </div>
+            )}
+
             <div className="form-field">
               <label htmlFor="notes" className="form-label">Notes for your stylist (optional)</label>
               <textarea
@@ -222,7 +304,7 @@ export function BookingPage() {
               type="button"
               className="btn btn--gold btn--full btn--lg"
               onClick={handleConfirmAndPay}
-              disabled={submitting}
+              disabled={submitting || (!isAuthenticated && !guestFieldsComplete)}
             >
               {submitting ? 'Processing…' : `Pay ${selectedService ? formatGHS(selectedService.price) : ''} & Confirm`}
             </button>
@@ -236,7 +318,7 @@ export function BookingPage() {
             Back
           </button>
         )}
-  
+
         {step < 3 && (
           <button
             type="button"

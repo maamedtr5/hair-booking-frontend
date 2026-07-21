@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import apiClient from '../utils/apiClient';
 
 export interface IntakeFormPayload {
   clientId: number;
@@ -18,13 +18,12 @@ export interface IntakeFormResponse {
   id: number;
   clientId: number;
   createdAt: string;
- 
 }
 
 export function useIntakeForm() {
   return useMutation<IntakeFormResponse, Error, IntakeFormPayload>({
     mutationFn: async (payload: IntakeFormPayload) => {
-      const res = await axios.post<IntakeFormResponse>('/intake', payload);
+      const res = await apiClient.post<IntakeFormResponse>('/intake', payload);
       return res.data;
     },
   });

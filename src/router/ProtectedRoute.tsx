@@ -11,9 +11,8 @@ export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
   const { isAuthenticated, isInitializing, user } = useAuth();
   const location = useLocation();
 
-  
   if (isInitializing) {
-    return null; 
+    return null;
   }
 
   // Not logged in → redirect to login, preserving the intended destination
@@ -27,7 +26,7 @@ export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
       user.role === 'ADMIN'
         ? '/dashboard'
         : user.role === 'STAFF'
-          ? '/staff/schedule'
+          ? '/staff/dashboard'
           : '/my/bookings';
     return <Navigate to={fallback} replace />;
   }

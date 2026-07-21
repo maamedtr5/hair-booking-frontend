@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { registerSchema, type RegisterFormValues } from '../../validators/authValidator';
@@ -7,10 +7,35 @@ import { useAuth } from '../../hooks/useAuth';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
 import { getErrorMessage } from '../../utils/apiClient';
+import type { Role } from '../../types/models';
+
+// Same maps as LoginPage
+const ROLE_HOME: Record<Role, string> = {
+  ADMIN: '/dashboard',
+  STAFF: '/staff/dashboard',
+  CLIENT: '/my/bookings',
+};
+
+const ROLE_ALLOWED_PREFIXES: Record<Role, string[]> = {
+  ADMIN: ['/dashboard'],
+  STAFF: ['/staff'],
+  CLIENT: ['/book', '/my', '/booking'],
+};
+
+function resolveRedirect(role: Role, from?: string): string {
+  const home = ROLE_HOME[role];
+  if (!from) return home;
+  const allowed = ROLE_ALLOWED_PREFIXES[role] ?? [];
+  const isAllowed = allowed.some((p) => from === p || from.startsWith(`${p}/`));
+  return isAllowed ? from : home;
+}
 
 export function RegisterPage() {
-  const { register } = useAuth(); // ✅ use context register directly
+  const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: { pathname: string } })?.from?.pathname;
+
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
 
@@ -23,25 +48,22 @@ export function RegisterPage() {
   const onSubmit = async (values: RegisterFormValues) => {
     setServerError('');
     try {
-    
-      await register({
+      const user = await register({
         name: values.name,
         email: values.email,
         password: values.password,
         phone: values.phone || undefined,
-        role: 'CLIENT',
+        role: 'CLIENT', // always forced
       });
 
-      navigate('/my/bookings', { replace: true });
+      const dest = resolveRedirect(user.role as Role, from);
+      navigate(dest, { replace: true });
     } catch (err) {
       setServerError(getErrorMessage(err));
     }
   };
 
   return (
-         <>
-       
-
     <div className="register-page">
       <div className="register-card">
         {/* Logo */}
@@ -52,9 +74,7 @@ export function RegisterPage() {
 
         {/* Heading */}
         <h1 className="register-title">Create account</h1>
-        <p className="register-sub">
-          Join Locs Allure and book your first appointment
-        </p>
+        <p className="register-sub">Join Locs Allure and book your first appointment</p>
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} noValidate>
@@ -149,6 +169,5 @@ export function RegisterPage() {
         </p>
       </div>
     </div>
-    </>
   );
 }

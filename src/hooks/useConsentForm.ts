@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import axios from 'axios';
+import apiClient from '../utils/apiClient';
 
 export interface ConsentFormPayload {
   clientId: number;
@@ -18,8 +18,8 @@ export interface ConsentFormResponse {
 export function useConsentForm() {
   return useMutation({
     mutationFn: async (payload: ConsentFormPayload) => {
-      const res = await axios.post<ConsentFormResponse>('/consent', payload);
+      const res = await apiClient.post<ConsentFormResponse>('/consent', payload);
       return res.data;
-    }
+    },
   });
 }

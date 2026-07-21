@@ -23,11 +23,11 @@ export default function ClientLayout() {
         </NavLink>
 
         <nav className="client-nav__links" aria-label="Main navigation">
-          <NavLink to="/booking" className={({ isActive }) => `client-nav__link ${isActive ? 'client-nav__link--active' : ''}`}>
+          <NavLink to="/book" className={({ isActive }) => `client-nav__link ${isActive ? 'client-nav__link--active' : ''}`}>
             Book
           </NavLink>
           {isAuthenticated && (
-            <NavLink to="/bookings" className={({ isActive }) => `client-nav__link ${isActive ? 'client-nav__link--active' : ''}`}>
+            <NavLink to="/my/bookings" className={({ isActive }) => `client-nav__link ${isActive ? 'client-nav__link--active' : ''}`}>
               My Bookings
             </NavLink>
           )}
@@ -50,7 +50,7 @@ export default function ClientLayout() {
           ) : (
             <>
               <NavLink to="/login" className="client-nav__link">Sign in</NavLink>
-              <NavLink to="/register" className="btn btn--primary btn--sm">Book now</NavLink>
+              <NavLink to="/book" className="btn btn--primary btn--sm">Book now</NavLink>
             </>
           )}
         </div>
@@ -61,8 +61,6 @@ export default function ClientLayout() {
       </main>
 
       <ToastContainer />
-
-     
     </div>
   );
 }

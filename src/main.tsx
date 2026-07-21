@@ -42,7 +42,7 @@ const ConfirmationPage = lazy(() =>
 const MyBookings = lazy(() =>
   import("./pages/client/MyBookings").then((m) => ({ default: m.MyBookings }))
 );
-
+const ClientProfile = lazy(() => import("./pages/client/ClientProfile"));
 
 const Dashboard = lazy(() => import("./pages/admin/Dashboard"));
 const Calendar = lazy(() =>
@@ -59,6 +59,7 @@ const Settings = lazy(() =>
 );
 
 // ── Staff portal pages — lazy ───────────────────────────────────────────
+const StaffDashboard = lazy(() => import("./pages/staff/Staffdashboard"));
 const StaffSchedule = lazy(() =>
   import("./pages/staff/StaffSchedule").then((m) => ({ default: m.StaffSchedule }))
 );
@@ -106,16 +107,18 @@ const router = createBrowserRouter([
       { path: "/register", element: <RegisterPage /> },
       { path: "/",          element: <LandingPage /> },
 
-      // Client portal — CLIENT role required.
+      // Client portal shell — public routes for guests, protected routes nested inside.
       {
-        element: <ProtectedRoute roles={["CLIENT"]} />,
+        element: <ClientLayout />,
         children: [
+          { path: "/book",                           element: withSuspense(<BookingPage />) },
+          { path: "/booking/confirmation/:bookingId", element: withSuspense(<ConfirmationPage />) },
+
           {
-            element: <ClientLayout />,
+            element: <ProtectedRoute roles={["CLIENT"]} />,
             children: [
-              { path: "/book",                           element: withSuspense(<BookingPage />) },
-              { path: "/my/bookings",                     element: withSuspense(<MyBookings />) },
-              { path: "/booking/confirmation/:bookingId", element: withSuspense(<ConfirmationPage />) },
+              { path: "/my/bookings", element: withSuspense(<MyBookings />) },
+              { path: "/profile",     element: withSuspense(<ClientProfile />) },
             ],
           },
         ],
@@ -145,6 +148,7 @@ const router = createBrowserRouter([
           {
             element: <StaffLayout />,
             children: [
+              { path: "/staff/dashboard",               element: withSuspense(<StaffDashboard />) },
               { path: "/staff/schedule",                element: withSuspense(<StaffSchedule />) },
               { path: "/staff/clients/:clientId/notes", element: withSuspense(<ClientNotes />) },
             ],

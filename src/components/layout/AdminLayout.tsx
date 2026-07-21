@@ -107,13 +107,8 @@ export function AdminLayout() {
           </div>
         </aside>
 
-        {/* Main Content Area */}
+      {/* Main content column */}
         <div className="admin-main">
-          <main className="admin-content">
-            
-           </main>
-       </div>
-          {/* Notifications */}
           <header className="admin-header">
             <div className="notif-wrap">
               <button
@@ -127,7 +122,6 @@ export function AdminLayout() {
                 )}
               </button>
 
-              {/* Notification Dropdown */}
               {notifOpen && (
                 <div className="notif-dropdown">
                   <div className="notif-header">
@@ -150,10 +144,7 @@ export function AdminLayout() {
                     <div className="notif-empty">No notifications</div>
                   ) : (
                     notifications.slice(0, 6).map((n) => (
-                      <div
-                        key={n.id}
-                        className={`notif-item${!n.read ? ' unread' : ''}`}
-                      >
+                      <div key={n.id} className={`notif-item${!n.read ? ' unread' : ''}`}>
                         {n.message}
                       </div>
                     ))
@@ -163,11 +154,11 @@ export function AdminLayout() {
             </div>
           </header>
 
-          {/* Page Content */}
           <main className="admin-content">
             <Outlet />
           </main>
         </div>
+      </div>
     </>
   );
 }

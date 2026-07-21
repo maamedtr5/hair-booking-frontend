@@ -56,8 +56,9 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
       { to: '/dashboard/reports',  label: 'Reports'   },
       { to: '/dashboard/settings', label: 'Settings'  },
     ];
-    if (variant === 'staff') return [
-      { to: '/staff/schedule', label: 'My Schedule' },
+   if (variant === 'staff') return [
+      { to: '/staff/dashboard', label: 'Dashboard'   },
+      { to: '/staff/schedule',  label: 'My Schedule' },
     ];
     if (variant === 'client') return [
       { to: '/services',    label: 'Services'    },
