@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+ import { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Scissors } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -61,15 +61,13 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
       { to: '/staff/schedule',  label: 'My Schedule' },
     ];
     if (variant === 'client') return [
-      { to: '/services',    label: 'Services'    },
-      { to: '/booking',     label: 'Book Now'    },
+      { to: '/book',        label: 'Book Now'    },
       { to: '/my/bookings', label: 'My Bookings' },
     ];
-    // public
+    // public — auth actions (Sign In / Register) live in navbar-actions only,
+    // never duplicated here as plain links too.
     return [
-      { to: '/services',  label: 'Services' },
-      { to: '/login',     label: 'Sign In'  },
-      { to: '/register',  label: 'Register' },
+      { to: '/book', label: 'Book Now' },
     ];
   })();
 
@@ -135,17 +133,25 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
           </NavLink>
         ))}
 
-        {isAuthenticated && (
-          <>
-            <div className="drawer-divider" />
-            <button
-              onClick={handleLogout}
-              className="drawer-link"
-              style={{ textAlign: 'left', width: '100%' }}
-            >
-              Sign Out
-            </button>
-          </>
+        <div className="drawer-divider" />
+
+        {isAuthenticated ? (
+          <button
+            onClick={handleLogout}
+            className="drawer-link"
+            style={{ textAlign: 'left', width: '100%' }}
+          >
+            Sign Out
+          </button>
+        ) : (
+          <div className="drawer-auth">
+            <Button variant="outline" fullWidth onClick={() => { navigate('/login'); closeMenu(); }}>
+              Sign In
+            </Button>
+            <Button variant="primary" fullWidth onClick={() => { navigate('/register'); closeMenu(); }}>
+              Register
+            </Button>
+          </div>
         )}
       </div>
     </>

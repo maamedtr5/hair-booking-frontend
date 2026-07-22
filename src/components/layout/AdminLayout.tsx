@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications, useUnreadCount } from '../../hooks/useNotifications';
-import { Navbar } from './Navbar';
 
 
 const NAV = [
@@ -36,27 +35,28 @@ export function AdminLayout() {
   const sidebarWidth = collapsed ? 64 : 220; // sidebar width in px
 
   return (
-    <>
-      {/* Navbar at the top */}
-      <Navbar variant="admin" />
+    <div
+      className="admin-root admin-root--full"
+      style={{ '--sw': `${sidebarWidth}px` } as React.CSSProperties}
+    >
+      {/* Sidebar navigation */}
+      <aside className="admin-sidebar" aria-label="Admin navigation">
+        {/* Collapse/Expand toggle */}
+        <button
+          className="sidebar-toggle"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+        >
+          {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
+        </button>
 
-      {/* Main layout container */}
-      <div
-        className="admin-root"
-        style={{ '--sw': `${sidebarWidth}px` } as React.CSSProperties}
-      >
-        {/* Sidebar navigation */}
-        <aside className="admin-sidebar" aria-label="Admin navigation">
-          {/* Collapse/Expand toggle */}
-          <button
-            className="sidebar-toggle"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          >
-            {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
-          </button>
+        {/* Brand mark — the sidebar is now the only nav, so it carries branding too */}
+        <div className={`sidebar-brand${collapsed ? ' collapsed-link' : ''}`}>
+          <span className="sidebar-brand__mark">LA</span>
+          {!collapsed && <span className="sidebar-brand__name">Locs Allure</span>}
+        </div>
 
-          {/* Navigation Links */}
+        {/* Navigation Links */}
           <nav
             style={{
               flex: 1,
@@ -159,6 +159,5 @@ export function AdminLayout() {
           </main>
         </div>
       </div>
-    </>
   );
 }
