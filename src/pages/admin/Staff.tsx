@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { UserPlus, Edit2, Trash2, Mail } from 'lucide-react';
 
 import { useStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from '../../hooks/useStaff';
+import { usersApi } from '../../api/users';
+import { useUiStore } from '../../store/uiStore';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
@@ -43,7 +45,7 @@ const styles: Record<string, React.CSSProperties> = {
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div style={styles.emptyGrid}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
+      <div style={{ fontSize: 32, marginBottom: 12 }}></div>
       <div style={styles.emptyTitle}>No staff members yet</div>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
         Add your first team member to get started
@@ -126,6 +128,10 @@ function CreateStaffModal({
   );
 }
 
+function generateTempPassword() {
+  return `Locs${Math.random().toString(36).slice(-6)}!9`;
+}
+
 // 🔹 Main StaffPage
 export function StaffPage() {
   const { data: staff = [], isLoading } = useStaff();
@@ -145,12 +151,38 @@ export function StaffPage() {
     formState: { errors, isSubmitting },
   } = useForm<StaffFormValues>({ resolver: zodResolver(staffSchema) });
 
+  const { addToast } = useUiStore();
+
   // Handle create
-  const handleCreate = async (values: StaffFormValues) => {
-    await createMutation.mutateAsync({ userId: 0, bio: values.bio ?? '' });
+const handleCreate = async (values: StaffFormValues) => {
+  // Generate temp password *inside* the handler
+  const tempPassword = generateTempPassword();
+
+
+  try {
+    const newUser = await usersApi.createWithRole({
+      name: values.name,
+      email: values.email,
+      password: tempPassword,
+      role: 'STAFF',
+    });
+
+    await createMutation.mutateAsync({ userId: newUser.id, bio: values.bio ?? '' });
+
+    addToast({
+      type: 'success',
+      message: `${values.name} added. Temporary password: ${tempPassword}`,
+    });
     setCreateOpen(false);
     resetForm();
-  };
+  } catch {
+    addToast({
+      type: 'error',
+      message: 'Could not add staff member. That email may already be in use.',
+    });
+  }
+};
+
 
   return (
     <>

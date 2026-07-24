@@ -1,4 +1,4 @@
- import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Scissors } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -74,7 +74,10 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
   return (
     <>
       <header className={`navbar variant-${variant}${scrolled ? ' scrolled' : ''}`}>
-        <Link to={variant === 'admin' ? '/dashboard' : '/book'} className="navbar-logo">
+        <Link
+          to={variant === 'admin' ? '/dashboard' : variant === 'staff' ? '/staff/dashboard' : '/'}
+          className="navbar-logo"
+        >
           <div className="navbar-logo-mark">
             <Scissors size={17} strokeWidth={2} />
           </div>

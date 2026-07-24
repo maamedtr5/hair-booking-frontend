@@ -19,7 +19,7 @@ import type { Appointment } from '../../types/models';
 
 export function MyBookings() {
   const { user } = useAuth();
-  const clientId = user?.id ?? 0;
+  const clientId = user?.client?.id ?? 0;
   const { data: appointments = [], isLoading } = useAppointmentsByClient(clientId);
 
   const cancelMutation = useCancelAppointment();
@@ -55,7 +55,7 @@ export function MyBookings() {
           <div className="bookings-section-title">Upcoming</div>
           {upcoming.length === 0 ? (
             <div className="empty-state">
-              <div className="empty-icon">✦</div>
+              <div className="empty-icon"></div>
               <div className="empty-title">No upcoming appointments</div>
               <p className="empty-sub">Ready for a fresh look? Book your next visit.</p>
               <a href="/book">

@@ -59,7 +59,7 @@ const Settings = lazy(() =>
 );
 const ClientsPage = lazy(() => import("./pages/admin/ClientPage"));
 const ServicesPage = lazy(() => import("./pages/admin/ServicePage"));
-const PromocodesPage = lazy(() => import("./pages/admin/Promocodes "));
+const PromocodesPage = lazy(() => import("./pages/admin/Promocodes"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const NotificationsPage = lazy(() => import("./pages/admin/Notification"));
 

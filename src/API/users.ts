@@ -8,6 +8,22 @@ export const usersApi = {
     return data.data ?? data;
   },
 
+  /**
+   * Admin-only: creates a brand-new User account with a given role.
+   * Used by the "Add staff member" flow — a Staff record can only ever
+   * reference an *existing* user, so adding someone who isn't already a
+   * user requires creating the account first.
+   */
+  createWithRole: async (payload: {
+    name: string;
+    email: string;
+    password: string;
+    role: 'ADMIN' | 'STAFF' | 'CLIENT';
+  }): Promise<User> => {
+    const { data } = await apiClient.post('/users', payload);
+    return data.data ?? data;
+  },
+
   getById: async (id: number): Promise<User> => {
     const { data } = await apiClient.get(`/users/${id}`);
     return data.data ?? data;

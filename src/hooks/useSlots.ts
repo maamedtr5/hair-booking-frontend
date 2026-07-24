@@ -11,12 +11,12 @@ export const slotKeys = {
   byId: (id: number) => ['slots', id] as const,
 };
 
-/** Fetch available (unbooked, future) slots for a staff member on a given date */
+/** Fetch available (unbooked, future) slots for a staff member — or any staff, if null — on a given date */
 export function useAvailableSlots(staffId: number | null, date: string | null) {
   return useQuery({
     queryKey: slotKeys.available(staffId ?? 0, date ?? ''),
-    queryFn: () => slotsApi.getAvailableSlots(staffId!, date!),
-    enabled: !!staffId && !!date,
+    queryFn: () => slotsApi.getAvailableSlots(staffId ?? 0, date!),
+    enabled: !!date,
     // Refetch every 60 seconds — slots can be booked by other users
     refetchInterval: 60_000,
     staleTime: 30_000,

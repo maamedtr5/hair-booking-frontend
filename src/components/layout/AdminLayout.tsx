@@ -1,4 +1,4 @@
- import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 import {
   LayoutDashboard,
@@ -10,6 +10,10 @@ import {
   ChevronRight,
   Bell,
   LogOut,
+  ClipboardList,
+  UserCircle,
+  Scissors,
+  Tag,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications, useUnreadCount } from '../../hooks/useNotifications';
@@ -18,6 +22,10 @@ import { useNotifications, useUnreadCount } from '../../hooks/useNotifications';
 const NAV = [
   { to: '/dashboard', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/dashboard/calendar', label: 'Calendar', icon: Calendar, end: false },
+  { to: '/dashboard/appointments', label: 'Appointments', icon: ClipboardList, end: false },
+  { to: '/dashboard/clients', label: 'Clients', icon: UserCircle, end: false },
+  { to: '/dashboard/services', label: 'Services', icon: Scissors, end: false },
+  { to: '/dashboard/promocodes', label: 'Promo codes', icon: Tag, end: false },
   { to: '/dashboard/staff', label: 'Staff', icon: Users, end: false },
   { to: '/dashboard/reports', label: 'Reports', icon: BarChart2, end: false },
   { to: '/dashboard/settings', label: 'Settings', icon: Settings, end: false },
@@ -27,6 +35,18 @@ export function AdminLayout() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
+  const notifRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!notifOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [notifOpen]);
 
   const userId = user?.id ?? 0;
   const unread = useUnreadCount(userId);
@@ -110,7 +130,7 @@ export function AdminLayout() {
       {/* Main content column */}
         <div className="admin-main">
           <header className="admin-header">
-            <div className="notif-wrap">
+            <div className="notif-wrap" ref={notifRef}>
               <button
                 className="notif-btn"
                 onClick={() => setNotifOpen((o) => !o)}

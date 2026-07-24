@@ -14,7 +14,7 @@ function toYMD(date: Date) { return date.toISOString().split('T')[0]; }
 
 export function StaffSchedule() {
   const { user } = useAuth();
-  const staffId = user?.id ?? 0;
+  const staffId = user?.staff?.id ?? 0;
   const [filter, setFilter] = useState<'upcoming' | 'today' | 'all'>('today');
   const { data: appointments = [], isLoading } = useAppointmentsByStaff(staffId);
   const updateMutation = useUpdateAppointment();
@@ -53,7 +53,7 @@ export function StaffSchedule() {
           <div className="appt-list">
             {filtered.length === 0 ? (
               <div className="empty">
-                <div className="empty-icon">✦</div>
+                <div className="empty-icon"></div>
                 <div className="empty-title">
                   {filter === 'today' ? 'No appointments today' : 'No appointments found'}
                 </div>

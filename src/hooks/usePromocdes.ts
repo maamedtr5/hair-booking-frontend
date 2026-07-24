@@ -15,6 +15,15 @@ export function useCreatePromoCode() {
   });
 }
 
+export function useUpdatePromoCode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, payload }: { id: number; payload: Parameters<typeof promoCodesApi.update>[1] }) =>
+      promoCodesApi.update(id, payload),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+  });
+}
+
 export function useDeletePromoCode() {
   const qc = useQueryClient();
   return useMutation({

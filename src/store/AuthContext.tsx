@@ -43,8 +43,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Listen for logout events from apiClient
-    window.addEventListener("auth:logout", logout);
-    return () => window.removeEventListener("auth:logout", logout);
+    window.addEventListener("auth:unauthorized", logout);
+    return () => window.removeEventListener("auth:unauthorized", logout);
   }, [logout]);
 
   const persist = useCallback((authUser: AuthUser) => {
