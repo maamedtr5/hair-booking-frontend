@@ -52,3 +52,28 @@ export function useMarkPaymentFailed() {
     onError: (err) => toast.error(getErrorMessage(err)),
   });
 }
+
+// Records a payment collected in person (cash or MoMo, directly between
+// client and staff/admin) — the default pay-after flow, or the
+// remaining balance after a deposit.
+export function useRecordManualPayment() {
+  const qc = useQueryClient();
+  const { allowed } = useRequireStaffRole();
+
+  return useMutation({
+    mutationFn: (payload: { bookingId: number; amount: number; method: 'CASH' | 'MOBILE_MONEY' }) => {
+      if (!allowed) {
+        return Promise.reject(
+          new Error('useRecordManualPayment is restricted to ADMIN/STAFF users.'),
+        );
+      }
+      return paymentsApi.recordManualPayment(payload);
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['bookings'] });
+      qc.invalidateQueries({ queryKey: ['appointments'] });
+      toast.success('Payment recorded');
+    },
+    onError: (err) => toast.error(getErrorMessage(err)),
+  });
+}

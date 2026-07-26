@@ -14,17 +14,18 @@ export async function getSlot(id: number): Promise<Slot> {
 }
 
 /**
- * GET /slots — filtered by staffId + date.
- * The backend accepts query params; we filter client-side if no dedicated route exists.
- * Returns only unbooked, future slots for the given staff on the given date.
+ * GET /slots/available — dynamically computed from business hours minus
+ * existing appointments (there's no table of pre-made "open" slots to
+ * query). staffId of null means "no preference" — the endpoint then
+ * returns a time as available if *any* staff member is free then.
  */
 export async function getAvailableSlots(
-  staffId: number,
+  staffId: number | null,
   date: string, // YYYY-MM-DD
 ): Promise<Slot[]> {
-  const { data } = await apiClient.get<ApiResponse<Slot[]>>('/slots', {
-    params: { staffId, date },
-  });
+  const params: Record<string, string> = { date };
+  if (staffId) params.staffId = String(staffId);
+  const { data } = await apiClient.get<ApiResponse<Slot[]>>('/slots/available', { params });
   return data.data ?? [];
 }
 

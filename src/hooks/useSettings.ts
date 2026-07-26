@@ -1,6 +1,7 @@
 // hooks/useSettings.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {  settingsApi } from '../api/settings';
+import type { BusinessHoursConfig, PaymentPolicy } from '../types/models';
 
 const KEY = 'settings';
 
@@ -25,5 +26,30 @@ export function useCreateSetting() {
   return useMutation({
     mutationFn:  settingsApi.create,
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY] }),
+  });
+}
+// Business hours — admin-configurable open days/hours.
+export function useBusinessHours() {
+  return useQuery({ queryKey: [KEY, 'businessHours'], queryFn: settingsApi.getBusinessHours });
+}
+
+export function useUpdateBusinessHours() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (config: BusinessHoursConfig) => settingsApi.updateBusinessHours(config),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY, 'businessHours'] }),
+  });
+}
+
+// Payment policy — deposit requirement at booking time.
+export function usePaymentPolicy() {
+  return useQuery({ queryKey: [KEY, 'paymentPolicy'], queryFn: settingsApi.getPaymentPolicy });
+}
+
+export function useUpdatePaymentPolicy() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (policy: PaymentPolicy) => settingsApi.updatePaymentPolicy(policy),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY, 'paymentPolicy'] }),
   });
 }

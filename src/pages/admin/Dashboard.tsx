@@ -15,7 +15,7 @@ import {
 } from '../../components/dashboard/StatsCard';
 import { RevenueChart } from '../../components/dashboard/RevenueChart';
 import { AppointmentTable } from '../../components/dashboard/AppointmentTable';
-import { AppointmentDetailModal } from '../../components/dashboard/AppointmentDetailModal ';
+import { AppointmentDetailModal } from '../../components/dashboard/AppointmentDetailModal';
 import { StatusBadge } from '../../components/ui/Badge';
 import type { Appointment, AppNotification } from '../../types/models';
 

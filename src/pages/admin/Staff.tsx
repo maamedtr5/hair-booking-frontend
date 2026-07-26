@@ -9,6 +9,12 @@ import { useUiStore } from '../../store/uiStore';
 import { PageSpinner } from '../../components/ui/Spinner';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
+
+// Module-level (not inside the component) so the impure Math.random call
+// isn't flagged as happening within component render scope.
+function generateTempPassword(): string {
+  return `Locs${Math.random().toString(36).slice(-6)}!9`;
+}
 import { Modal, ConfirmModal } from '../../components/ui/Modal';
 
 import { staffSchema, type StaffFormValues } from '../../validators/staffValidator';
@@ -45,7 +51,7 @@ const styles: Record<string, React.CSSProperties> = {
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div style={styles.emptyGrid}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}></div>
+      <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
       <div style={styles.emptyTitle}>No staff members yet</div>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
         Add your first team member to get started
@@ -128,10 +134,6 @@ function CreateStaffModal({
   );
 }
 
-function generateTempPassword() {
-  return `Locs${Math.random().toString(36).slice(-6)}!9`;
-}
-
 // 🔹 Main StaffPage
 export function StaffPage() {
   const { data: staff = [], isLoading } = useStaff();
@@ -154,35 +156,33 @@ export function StaffPage() {
   const { addToast } = useUiStore();
 
   // Handle create
-const handleCreate = async (values: StaffFormValues) => {
-  // Generate temp password *inside* the handler
-  const tempPassword = generateTempPassword();
+  const handleCreate = async (values: StaffFormValues) => {
+    // A Staff record can only reference an *existing* user — for someone
+    // who isn't already a user in the system, that account has to be
+    // created first. Password is a generated temporary one; the admin
+    // shares it with the new hire, who can change it after logging in.
+    const tempPassword = generateTempPassword();
 
+    try {
+      const newUser = await usersApi.createWithRole({
+        name: values.name,
+        email: values.email,
+        password: tempPassword,
+        role: 'STAFF',
+      });
 
-  try {
-    const newUser = await usersApi.createWithRole({
-      name: values.name,
-      email: values.email,
-      password: tempPassword,
-      role: 'STAFF',
-    });
+      await createMutation.mutateAsync({ userId: newUser.id, bio: values.bio ?? '' });
 
-    await createMutation.mutateAsync({ userId: newUser.id, bio: values.bio ?? '' });
-
-    addToast({
-      type: 'success',
-      message: `${values.name} added. Temporary password: ${tempPassword}`,
-    });
-    setCreateOpen(false);
-    resetForm();
-  } catch {
-    addToast({
-      type: 'error',
-      message: 'Could not add staff member. That email may already be in use.',
-    });
-  }
-};
-
+      addToast({
+        type: 'success',
+        message: `${values.name} added. Temporary password: ${tempPassword}`,
+      });
+      setCreateOpen(false);
+      resetForm();
+    } catch {
+      addToast({ type: 'error', message: 'Could not add staff member. That email may already be in use.' });
+    }
+  };
 
   return (
     <>

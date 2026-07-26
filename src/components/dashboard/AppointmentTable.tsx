@@ -4,6 +4,7 @@ import { useAppointments, useUpdateAppointment } from '../../hooks/useAppointmen
 import { StatusBadge } from '../ui/Badge';
 import { Spinner } from '../ui/Spinner';
 import { ConfirmModal } from '../ui/Modal';
+import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { useUiStore } from '../../store/uiStore';
 import type { Appointment, AppointmentStatus } from '../../types';
 
@@ -84,6 +85,7 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
   const [pendingAction, setPendingAction] = useState<{ id: number; type: 'confirm' | 'complete' | 'cancel' } | null>(null);
+  const [viewAppointment, setViewAppointment] = useState<Appointment | null>(null);
 
   const { data: appointments, isLoading, isError } = useAppointments();
   const updateMutation = useUpdateAppointment();
@@ -195,7 +197,7 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
                       <td className="appt-table__cell appt-table__cell--actions">
                         <RowActions
                           appointment={appt}
-                          onView={(id) => navigate(`/admin/appointments/${id}`)}
+                          onView={() => setViewAppointment(appt)}
                           onConfirm={(id) => setPendingAction({ id, type: 'confirm' })}
                           onComplete={(id) => setPendingAction({ id, type: 'complete' })}
                           onCancel={(id) => setPendingAction({ id, type: 'cancel' })}
@@ -211,12 +213,16 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
 
         {limit && (appointments?.length ?? 0) > limit && (
           <div className="appt-table__view-all">
-            <button type="button" onClick={() => navigate('/admin/appointments')} className="btn btn--ghost btn--sm">
+            <button type="button" onClick={() => navigate('/dashboard/appointments')} className="btn btn--ghost btn--sm">
               View all appointments →
             </button>
           </div>
         )}
       </div>
+
+      {viewAppointment && (
+        <AppointmentDetailModal appointment={viewAppointment} onClose={() => setViewAppointment(null)} />
+      )}
 
       {pendingAction && (
         <ConfirmModal

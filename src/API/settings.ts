@@ -1,5 +1,6 @@
 import apiClient from '../utils/apiClient';
 import type { Settings, ApiResponse } from '../types/models';
+import type { BusinessHoursConfig, PaymentPolicy } from '../types/models';
 
 export const settingsApi = {
   getAll: async (): Promise<Settings[]> => {
@@ -20,5 +21,23 @@ export const settingsApi = {
   },
   delete: async (id: number): Promise<void> => {
     await apiClient.delete(`/settings/${id}`);
+  },
+
+  // Business hours — admin-configurable open days/hours.
+  getBusinessHours: async (): Promise<BusinessHoursConfig> => {
+    const { data } = await apiClient.get<ApiResponse<BusinessHoursConfig>>('/settings/business-hours');
+    return data.data!;
+  },
+  updateBusinessHours: async (config: BusinessHoursConfig): Promise<void> => {
+    await apiClient.put('/settings/business-hours', config);
+  },
+
+  // Payment policy — deposit requirement at booking time. Read is public.
+  getPaymentPolicy: async (): Promise<PaymentPolicy> => {
+    const { data } = await apiClient.get<ApiResponse<PaymentPolicy>>('/settings/payment-policy');
+    return data.data!;
+  },
+  updatePaymentPolicy: async (policy: PaymentPolicy): Promise<void> => {
+    await apiClient.put('/settings/payment-policy', policy);
   },
 };

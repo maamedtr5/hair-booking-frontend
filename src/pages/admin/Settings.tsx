@@ -1,27 +1,16 @@
 import React, { useState } from 'react';
-import { Save, Plus, Trash2 } from 'lucide-react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import type { Resolver } from 'react-hook-form';
+import { Save, ExternalLink } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
-import apiClient from '../../utils/apiClient';
 import { Button } from '../../components/ui/Button';
 import { Input } from '../../components/ui/Input';
-import { Modal, ConfirmModal } from '../../components/ui/Modal';
-import { Badge } from '../../components/ui/Badge';
 import { PageSpinner } from '../../components/ui/Spinner';
 
-import { z } from 'zod';
-import { createPromoCodeSchema } from '../../validators/promocodeValidator';
 import { toast } from '../../store/uiStore';
-import { getErrorMessage } from '../../utils/apiClient';
-import { formatGHS } from '../../utils/formatCurrency';
-
-type CreatePromoCodeFormValues = z.infer<typeof createPromoCodeSchema>;
+import { useBusinessHours, useUpdateBusinessHours, usePaymentPolicy, useUpdatePaymentPolicy } from '../../hooks/useSettings';
+import type { BusinessHoursConfig, DayHours, PaymentPolicy } from '../../types/models';
 
 type SettingsSectionProps = { title: string; children: React.ReactNode };
-type PromoRow = CreatePromoCodeFormValues & { id: number };
 
 function SettingsSection({ title, children }: SettingsSectionProps) {
   return (
@@ -34,174 +23,209 @@ function SettingsSection({ title, children }: SettingsSectionProps) {
   );
 }
 
-export function Settings() {
-  const qc = useQueryClient();
-  const [promoOpen,    setPromoOpen]    = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<number | null>(null);
+const DAY_LABELS: Array<{ key: keyof BusinessHoursConfig; label: string }> = [
+  { key: 'monday', label: 'Monday' },
+  { key: 'tuesday', label: 'Tuesday' },
+  { key: 'wednesday', label: 'Wednesday' },
+  { key: 'thursday', label: 'Thursday' },
+  { key: 'friday', label: 'Friday' },
+  { key: 'saturday', label: 'Saturday' },
+  { key: 'sunday', label: 'Sunday' },
+];
 
-  const { data: promos = [], isLoading: promosLoading } = useQuery({
-    queryKey: ['promocodes'],
-    queryFn: async () => {
-      const { data } = await apiClient.get('/promocodes');
-      return data.data ?? data;
-    },
-  });
+function BusinessHoursSection() {
+  const { data, isLoading } = useBusinessHours();
+  const updateMutation = useUpdateBusinessHours();
+  const [draft, setDraft] = useState<BusinessHoursConfig | null>(null);
 
-  const createPromoMutation = useMutation({
-    mutationFn: async (payload: CreatePromoCodeFormValues) => {
-      const { data } = await apiClient.post('/promocodes', payload);
-      return data;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['promocodes'] });
-      toast.success('Promo code created');
-      setPromoOpen(false);
-      resetPromo();
-    },
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
+  const working = draft ?? data ?? null;
 
-  const deletePromoMutation = useMutation({
-    mutationFn: async (id: number) => { await apiClient.delete(`/promocodes/${id}`); },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['promocodes'] });
-      toast.success('Promo code deleted');
-      setDeleteTarget(null);
-    },
-    onError: (err) => toast.error(getErrorMessage(err)),
-  });
+  function setDay(key: keyof BusinessHoursConfig, patch: Partial<DayHours>) {
+    if (!working) return;
+    setDraft({ ...working, [key]: { ...working[key], ...patch } });
+  }
 
-  const {
-    register: registerPromo,
-    handleSubmit: handlePromoSubmit,
-    reset: resetPromo,
-    formState: { errors: promoErrors, isSubmitting: promoSubmitting },
-  } = useForm<CreatePromoCodeFormValues>({
-    // Cast resolves the input/output type mismatch caused by z.boolean().default(true)
-    resolver: zodResolver(createPromoCodeSchema) as Resolver<CreatePromoCodeFormValues>,
-  });
+  async function handleSave() {
+    if (!working) return;
+    try {
+      await updateMutation.mutateAsync(working);
+      toast.success('Business hours updated');
+    } catch {
+      toast.error('Could not save business hours');
+    }
+  }
 
-  const closePromoModal = () => { setPromoOpen(false); resetPromo(); };
+  if (isLoading || !working) return <PageSpinner message="Loading…" />;
 
   return (
-    <>
-      <div className="settings-page animate-fade-up">
-        <div>
-          <h1 className="page-title">Settings</h1>
-          <p className="page-sub">Configure business settings for Locs Allure</p>
+    <div className="hours-editor">
+      {DAY_LABELS.map(({ key, label }) => {
+        const day = working[key];
+        return (
+          <div key={key} className="hours-row">
+            <label className="hours-row__day">
+              <input
+                type="checkbox"
+                checked={day.open}
+                onChange={(e) => setDay(key, { open: e.target.checked })}
+              />
+              {label}
+            </label>
+            {day.open ? (
+              <div className="hours-row__times">
+                <input
+                  type="time"
+                  className="hours-row__time-input"
+                  value={day.start}
+                  onChange={(e) => setDay(key, { start: e.target.value })}
+                />
+                <span className="hours-row__to">to</span>
+                <input
+                  type="time"
+                  className="hours-row__time-input"
+                  value={day.end}
+                  onChange={(e) => setDay(key, { end: e.target.value })}
+                />
+              </div>
+            ) : (
+              <span className="hours-row__closed">Closed</span>
+            )}
+          </div>
+        );
+      })}
+      <Button icon={<Save size={14} />} onClick={handleSave} loading={updateMutation.isPending} style={{ marginTop: 16 }}>
+        Save Business Hours
+      </Button>
+    </div>
+  );
+}
+
+function PaymentPolicySection() {
+  const { data, isLoading } = usePaymentPolicy();
+  const updateMutation = useUpdatePaymentPolicy();
+  const [draft, setDraft] = useState<PaymentPolicy | null>(null);
+
+  const working = draft ?? data ?? null;
+
+  async function handleSave() {
+    if (!working) return;
+    if (working.requireDeposit && (!working.depositAmount || working.depositAmount <= 0)) {
+      toast.error('Deposit amount must be greater than 0');
+      return;
+    }
+    try {
+      await updateMutation.mutateAsync(working);
+      toast.success('Payment policy updated');
+    } catch {
+      toast.error('Could not save payment policy');
+    }
+  }
+
+  if (isLoading || !working) return <PageSpinner message="Loading…" />;
+
+  return (
+    <div className="form-fields">
+      <p className="settings-help-text">
+        By default, clients confirm their booking with no payment through the platform — the full amount is
+        collected in person (cash or MoMo, directly between client and staff/admin). Turn this on to require a
+        deposit at booking time to secure the slot.
+      </p>
+
+      <label className="form-field--inline">
+        <input
+          type="checkbox"
+          checked={working.requireDeposit}
+          onChange={(e) => setDraft({ ...working, requireDeposit: e.target.checked })}
+        />
+        Require a deposit at booking time
+      </label>
+
+      {working.requireDeposit && (
+        <div className="form-row">
+          <div>
+            <label className="select-label">Deposit type</label>
+            <select
+              className="form-select"
+              value={working.depositType}
+              onChange={(e) => setDraft({ ...working, depositType: e.target.value as PaymentPolicy['depositType'] })}
+            >
+              <option value="PERCENTAGE">Percentage of service price</option>
+              <option value="FIXED">Fixed amount (GHS)</option>
+            </select>
+          </div>
+          <Input
+            label={working.depositType === 'PERCENTAGE' ? 'Deposit (%)' : 'Deposit (GHS)'}
+            type="number"
+            min={1}
+            max={working.depositType === 'PERCENTAGE' ? 100 : undefined}
+            value={working.depositAmount}
+            onChange={(e) => setDraft({ ...working, depositAmount: Number(e.target.value) })}
+          />
         </div>
+      )}
 
-        {/* Promo Codes */}
-        <SettingsSection title="Promo Codes">
-          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 16 }}>
-            <Button size="sm" icon={<Plus size={14} />} onClick={() => setPromoOpen(true)}>
-              New Promo Code
-            </Button>
-          </div>
-          {promosLoading ? (
-            <PageSpinner message="Loading…" />
-          ) : (
-            <table className="promo-table">
-              <thead>
-                <tr><th>Code</th><th>Discount</th><th>Valid Until</th><th>Status</th><th /></tr>
-              </thead>
-              <tbody>
-                {promos.length === 0 ? (
-                  <tr><td colSpan={5} style={{ textAlign: 'center', padding: '28px 0', fontStyle: 'italic', color: 'var(--text-muted)' }}>No promo codes yet</td></tr>
-                ) : promos.map((p: PromoRow) => (
-                  <tr key={p.id}>
-                    <td>
-                      <span className="promo-code">{p.code}</span>
-                      {p.description && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{p.description}</div>}
-                    </td>
-                    <td>{p.type === 'PERCENTAGE' ? `${p.discount}% off` : `${formatGHS(p.discount)} off`}</td>
-                    <td>{p.validUntil ? p.validUntil.split('T')[0] : '—'}</td>
-                    <td><Badge variant={p.isActive ? 'green' : 'muted'} size="sm">{p.isActive ? 'Active' : 'Inactive'}</Badge></td>
-                    <td>
-                      <Button variant="ghost" size="sm" icon={<Trash2 size={13} />} onClick={() => setDeleteTarget(p.id)} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </SettingsSection>
+      <Button icon={<Save size={14} />} onClick={handleSave} loading={updateMutation.isPending}>
+        Save Payment Policy
+      </Button>
+    </div>
+  );
+}
 
-        {/* Notification Preferences */}
-        <SettingsSection title="Notification Preferences">
-          {[
-            { label: 'Appointment reminders',   sub: 'Send SMS/email reminders before appointments',   key: 'reminders' },
-            { label: 'Booking confirmations',   sub: 'Notify clients when their booking is confirmed', key: 'confirmations' },
-            { label: 'Cancellation alerts',     sub: 'Alert admin when an appointment is cancelled',   key: 'cancellations' },
-          ].map(({ label, sub, key }) => (
-            <NotificationToggle key={key} label={label} sub={sub} />
-          ))}
-        </SettingsSection>
+export function Settings() {
+  const navigate = useNavigate();
 
-        {/* Business Information */}
-        <SettingsSection title="Business Information">
-          <div className="form-fields">
-            <div className="form-row">
-              <Input label="Business name" defaultValue="Locs Allure" />
-              <Input label="Phone" type="tel" defaultValue="+233 20 869 0943" />
-            </div>
-            <Input label="Address" defaultValue="Madina Estates, Accra, Ghana" />
-            <Input label="Email" type="email" defaultValue="hello@locsallure.com" />
-            <Button icon={<Save size={14} />}>Save Changes</Button>
-          </div>
-        </SettingsSection>
+  return (
+    <div className="settings-page animate-fade-up">
+      <div>
+        <h1 className="page-title">Settings</h1>
+        <p className="page-sub">Configure business settings for Locs Allure</p>
       </div>
 
-      {/* Create Promo Code Modal */}
-      <Modal open={promoOpen} onClose={closePromoModal} title="Create Promo Code" size="sm"
-        footer={
-          <>
-            <Button variant="ghost" onClick={closePromoModal}>Cancel</Button>
-            <Button form="promo-form" type="submit" loading={promoSubmitting || createPromoMutation.isPending}>
-              Create Code
-            </Button>
-          </>
-        }
-      >
-        <form id="promo-form"
-          onSubmit={handlePromoSubmit((values) => createPromoMutation.mutate(values))}
-          noValidate
-        >
-          <div className="form-fields">
-            <Input label="Code" placeholder="WELCOME20" error={promoErrors.code?.message} {...registerPromo('code')} />
-            <Input label="Description (optional)" placeholder="New client welcome discount" {...registerPromo('description')} />
-            <div className="form-row">
-              <Input label="Discount value" type="number" step="0.01" placeholder="20"
-                error={promoErrors.discount?.message}
-                {...registerPromo('discount', { valueAsNumber: true })} />
-              <div>
-                <label className="select-label">Type</label>
-                <select className="form-select" {...registerPromo('type')}>
-                  <option value="PERCENTAGE">Percentage (%)</option>
-                  <option value="FIXED">Fixed (GHS)</option>
-                </select>
-              </div>
-            </div>
-            <div className="form-row">
-              <Input label="Valid from" type="date" error={promoErrors.validFrom?.message} {...registerPromo('validFrom')} />
-              <Input label="Valid until" type="date" error={promoErrors.validUntil?.message} {...registerPromo('validUntil')} />
-            </div>
-          </div>
-        </form>
-      </Modal>
+      {/* Business Hours */}
+      <SettingsSection title="Business Hours">
+        <BusinessHoursSection />
+      </SettingsSection>
 
-      {/* Delete Confirmation */}
-      <ConfirmModal
-        open={deleteTarget !== null}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => deleteTarget !== null && deletePromoMutation.mutate(deleteTarget)}
-        title="Delete Promo Code"
-        message="This promo code will be permanently deleted and can no longer be used."
-        confirmLabel="Delete"
-        danger
-        loading={deletePromoMutation.isPending}
-      />
-    </>
+      {/* Payment Policy */}
+      <SettingsSection title="Payment Policy">
+        <PaymentPolicySection />
+      </SettingsSection>
+
+      {/* Promo Codes — managed on its own dedicated page now, rather than
+          duplicating the same create/edit/delete logic in two places. */}
+      <SettingsSection title="Promo Codes">
+        <p className="settings-help-text" style={{ marginBottom: 12 }}>
+          Promo codes are managed on their own page.
+        </p>
+        <Button variant="ghost" icon={<ExternalLink size={14} />} onClick={() => navigate('/dashboard/promocodes')}>
+          Go to Promo Codes
+        </Button>
+      </SettingsSection>
+
+      {/* Notification Preferences */}
+      <SettingsSection title="Notification Preferences">
+        {[
+          { label: 'Appointment reminders',   sub: 'Send SMS/email reminders before appointments',   key: 'reminders' },
+          { label: 'Booking confirmations',   sub: 'Notify clients when their booking is confirmed', key: 'confirmations' },
+          { label: 'Cancellation alerts',     sub: 'Alert admin when an appointment is cancelled',   key: 'cancellations' },
+        ].map(({ label, sub, key }) => (
+          <NotificationToggle key={key} label={label} sub={sub} />
+        ))}
+      </SettingsSection>
+
+      {/* Business Information */}
+      <SettingsSection title="Business Information">
+        <div className="form-fields">
+          <div className="form-row">
+            <Input label="Business name" defaultValue="Locs Allure" />
+            <Input label="Phone" type="tel" defaultValue="+233 20 869 0943" />
+          </div>
+          <Input label="Address" defaultValue="Madina Estates, Accra, Ghana" />
+          <Input label="Email" type="email" defaultValue="hello@locsallure.com" />
+          <Button icon={<Save size={14} />}>Save Changes</Button>
+        </div>
+      </SettingsSection>
+    </div>
   );
 }
 

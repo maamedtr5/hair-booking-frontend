@@ -1,4 +1,4 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import * as paymentsApi from '../api/payments';
 import type { InitPaymentPayload } from '../types/models';
 import { toast } from '../store/uiStore';
@@ -24,5 +24,21 @@ export function useInitializePayment() {
     mutationFn: (payload: InitPaymentPayload) =>
       paymentsApi.initializePayment(payload),
     onError: (err) => toast.error(getErrorMessage(err)),
+  });
+}
+
+/** What will this booking actually cost right now? (full price / deposit / nothing) */
+export function usePaymentQuote(bookingId: number | null) {
+  return useQuery({
+    queryKey: ['paymentQuote', bookingId],
+    queryFn: () => paymentsApi.getPaymentQuote(bookingId!),
+    enabled: !!bookingId,
+  });
+}
+
+/** Imperative version for use inside an async handler (e.g. right after booking creation) */
+export function useFetchPaymentQuote() {
+  return useMutation({
+    mutationFn: (bookingId: number) => paymentsApi.getPaymentQuote(bookingId),
   });
 }

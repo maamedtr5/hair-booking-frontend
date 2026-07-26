@@ -3,7 +3,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { useAuthContext } from '../../hooks/useAuthcontext';
 import { useCreateAppointment } from '../../hooks/useAppointments';
-import { useInitializePayment } from '../../hooks/usePayments';
+import { useInitializePayment, useFetchPaymentQuote } from '../../hooks/usePayments';
+import { usePaymentPolicy } from '../../hooks/useSettings';
 import { useConsentForm } from '../../hooks/useConsentForm';
 import { ServiceSelector } from '../../components/booking/ServiceSelector';
 import { StaffPicker } from '../../components/booking/StaffPicker';
@@ -25,7 +26,7 @@ const STEPS = [
   { num: 1, label: 'Service' },
   { num: 2, label: 'Stylist & Time' },
   { num: 3, label: 'Consent' },
-  { num: 4, label: 'Review & Pay' },
+  { num: 4, label: 'Review & Confirm' },
 ] as const;
 
 export function BookingPage() {
@@ -49,6 +50,8 @@ export function BookingPage() {
 
   const createAppointment = useCreateAppointment();
   const initPayment = useInitializePayment();
+  const fetchQuote = useFetchPaymentQuote();
+  const { data: paymentPolicy } = usePaymentPolicy();
   const consentFormMutation = useConsentForm();
 
   const clientId = user?.client?.id;
@@ -56,6 +59,15 @@ export function BookingPage() {
 
   const canProceedFromStep1 = !!selectedService;
   const canProceedFromStep2 = !!selectedSlot; // staff is optional ("no preference")
+
+  const estimatedDepositLabel = (() => {
+    if (!selectedService || !paymentPolicy?.requireDeposit) return '';
+    const amount =
+      paymentPolicy.depositType === 'PERCENTAGE'
+        ? Math.round(((selectedService.price * paymentPolicy.depositAmount) / 100) * 100) / 100
+        : Math.min(paymentPolicy.depositAmount, selectedService.price);
+    return formatGHS(amount);
+  })();
 
   async function handleConfirmAndPay() {
     if (!selectedService || !selectedSlot) {
@@ -122,10 +134,21 @@ export function BookingPage() {
         }
       }
 
-      // Initialise payment — Paystack returns a redirect URL
+      // Ask the server what (if anything) is actually due right now —
+      // under the default pay-after policy this is 0 and no payment step
+      // runs at all; a deposit policy returns the deposit-only amount.
+      // The full/remaining balance is always collected in person and
+      // logged by staff/admin afterwards (see AppointmentDetailModal).
+      const quote = await fetchQuote.mutateAsync(booking.id);
+
+      if (quote.amountDue <= 0) {
+        reset();
+        navigate(`/booking/confirmation/${booking.id}`);
+        return;
+      }
+
       const paymentRes = await initPayment.mutateAsync({
         bookingId: booking.id,
-        amount:    selectedService.price,
         method:    paymentMethod,
         email:     payEmail!,
       });
@@ -280,25 +303,31 @@ export function BookingPage() {
               />
             </div>
 
-            <div className="form-field">
-              <label className="form-label">Payment method</label>
-              <div className="booking-payment-methods">
-                <button
-                  type="button"
-                  className={`booking-payment-method ${paymentMethod === 'MOBILE_MONEY' ? 'booking-payment-method--active' : ''}`}
-                  onClick={() => setPaymentMethod('MOBILE_MONEY')}
-                >
-                  Mobile Money
-                </button>
-                <button
-                  type="button"
-                  className={`booking-payment-method ${paymentMethod === 'CARD' ? 'booking-payment-method--active' : ''}`}
-                  onClick={() => setPaymentMethod('CARD')}
-                >
-                  Card
-                </button>
+            {paymentPolicy?.requireDeposit && (
+              <div className="form-field">
+                <label className="form-label">Deposit payment method</label>
+                <div className="booking-payment-methods">
+                  <button
+                    type="button"
+                    className={`booking-payment-method ${paymentMethod === 'MOBILE_MONEY' ? 'booking-payment-method--active' : ''}`}
+                    onClick={() => setPaymentMethod('MOBILE_MONEY')}
+                  >
+                    Mobile Money
+                  </button>
+                  <button
+                    type="button"
+                    className={`booking-payment-method ${paymentMethod === 'CARD' ? 'booking-payment-method--active' : ''}`}
+                    onClick={() => setPaymentMethod('CARD')}
+                  >
+                    Card
+                  </button>
+                </div>
+                <p className="booking-deposit-note">
+                  A {estimatedDepositLabel} deposit secures your slot. The remaining balance is paid directly to
+                  your stylist at the salon (cash or MoMo).
+                </p>
               </div>
-            </div>
+            )}
 
             <button
               type="button"
@@ -306,7 +335,11 @@ export function BookingPage() {
               onClick={handleConfirmAndPay}
               disabled={submitting || (!isAuthenticated && !guestFieldsComplete)}
             >
-              {submitting ? 'Processing…' : `Pay ${selectedService ? formatGHS(selectedService.price) : ''} & Confirm`}
+              {submitting
+                ? 'Processing…'
+                : paymentPolicy?.requireDeposit
+                  ? `Pay ${estimatedDepositLabel} Deposit & Confirm`
+                  : 'Confirm Booking'}
             </button>
           </div>
         )}

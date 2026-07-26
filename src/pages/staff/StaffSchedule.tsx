@@ -53,7 +53,7 @@ export function StaffSchedule() {
           <div className="appt-list">
             {filtered.length === 0 ? (
               <div className="empty">
-                <div className="empty-icon"></div>
+                <div className="empty-icon">✦</div>
                 <div className="empty-title">
                   {filter === 'today' ? 'No appointments today' : 'No appointments found'}
                 </div>

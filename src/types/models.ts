@@ -205,6 +205,28 @@ export interface Settings {
   updatedAt: string;
 }
 
+export interface DayHours {
+  open: boolean;
+  start: string; // 'HH:MM' 24hr
+  end: string;   // 'HH:MM' 24hr
+}
+
+export interface BusinessHoursConfig {
+  sunday: DayHours;
+  monday: DayHours;
+  tuesday: DayHours;
+  wednesday: DayHours;
+  thursday: DayHours;
+  friday: DayHours;
+  saturday: DayHours;
+}
+
+export interface PaymentPolicy {
+  requireDeposit: boolean;
+  depositType: 'PERCENTAGE' | 'FIXED';
+  depositAmount: number;
+}
+
 export interface Waitlist {
   id: number;
   clientId: number;
@@ -304,7 +326,7 @@ export interface CreateBookingPayload {
 
 export interface InitPaymentPayload {
   bookingId: number;
-  amount: number;
+  amount?: number; // ignored by the server — kept optional for backwards compat
   method: PaymentMethod;
   email: string;
 }
