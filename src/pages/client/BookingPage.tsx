@@ -150,6 +150,7 @@ export function BookingPage() {
       const paymentRes = await initPayment.mutateAsync({
         bookingId: booking.id,
         method:    paymentMethod,
+        provider:  'PAYSTACK', // both MoMo and Card deposits route through Paystack
         email:     payEmail!,
       });
 

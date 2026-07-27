@@ -328,6 +328,12 @@ export interface InitPaymentPayload {
   bookingId: number;
   amount?: number; // ignored by the server — kept optional for backwards compat
   method: PaymentMethod;
+  // Required by POST /payments/init (validatePaymentCreate rejects a
+  // missing provider) — online deposits (card or mobile money) both run
+  // through Paystack in the Ghana market, so this is always 'PAYSTACK'
+  // whenever this payload is sent at all. CASH/MOBILE_MONEY collected in
+  // person go through recordManualPayment instead, not this endpoint.
+  provider: PaymentProvider;
   email: string;
 }
 

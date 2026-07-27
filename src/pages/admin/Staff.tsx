@@ -51,7 +51,7 @@ const styles: Record<string, React.CSSProperties> = {
 function EmptyState({ onAdd }: { onAdd: () => void }) {
   return (
     <div style={styles.emptyGrid}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>✦</div>
+      <div style={{ fontSize: 32, marginBottom: 12 }}> </div>
       <div style={styles.emptyTitle}>No staff members yet</div>
       <p style={{ fontSize: 13, color: 'var(--text-muted)', marginBottom: 20 }}>
         Add your first team member to get started
