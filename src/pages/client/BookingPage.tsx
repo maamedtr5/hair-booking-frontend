@@ -1,11 +1,15 @@
-import { useState } from 'react';
+ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
+import { AxiosError } from 'axios';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { useAuthContext } from '../../hooks/useAuthcontext';
 import { useCreateAppointment } from '../../hooks/useAppointments';
 import { useInitializePayment, useFetchPaymentQuote } from '../../hooks/usePayments';
 import { usePaymentPolicy } from '../../hooks/useSettings';
 import { useConsentForm } from '../../hooks/useConsentForm';
+import { useValidatePromoCode } from '../../hooks/usePromocdes';
+import { slotKeys } from '../../hooks/useSlots';
 import { ServiceSelector } from '../../components/booking/ServiceSelector';
 import { StaffPicker } from '../../components/booking/StaffPicker';
 import { SlotCalender } from '../../components/booking/SlotCalender';
@@ -31,17 +35,48 @@ const STEPS = [
 
 export function BookingPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { user, isAuthenticated } = useAuthContext();
   const {
     step, nextStep, prevStep,
     selectedService, selectedStaff, selectedSlot,
     notes, setNotes,
     consentData,
+    appliedPromocode, setPromocode,
     reset,
   } = useBookingFlowStore();
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('MOBILE_MONEY');
   const [submitting, setSubmitting] = useState(false);
+
+  // Promo code entry — validated against the server as soon as they hit
+  // "Apply" so they see a live discount preview, but the real amount is
+  // always recomputed authoritatively server-side via getPaymentQuote
+  // once the booking exists (see resolveBookingAmount in
+  // paymentController.js). This is a preview, not the source of truth.
+  const [promoCodeInput, setPromoCodeInput] = useState('');
+  const validatePromo = useValidatePromoCode();
+
+  async function handleApplyPromo() {
+    if (!promoCodeInput.trim()) return;
+    try {
+      const promo = await validatePromo.mutateAsync(promoCodeInput.trim().toUpperCase());
+      const now = new Date();
+      if (!promo.isActive || now < new Date(promo.validFrom) || now > new Date(promo.validUntil)) {
+        toast.error('That promo code is not currently valid.');
+        return;
+      }
+      setPromocode(promo);
+      toast.success(`Promo code "${promo.code}" applied.`);
+    } catch (err) {
+      toast.error(getErrorMessage(err) || 'That promo code was not found.');
+    }
+  }
+
+  function handleRemovePromo() {
+    setPromocode(null);
+    setPromoCodeInput('');
+  }
 
   // Guest checkout fields — only used when !isAuthenticated
   const [guestName, setGuestName] = useState('');
@@ -105,6 +140,7 @@ export function BookingPage() {
         staffId:   selectedStaff?.id,
         date:      selectedSlot.startTime,
         notes:     notes || undefined,
+        promoCode: appliedPromocode?.code,
         ...(!isAuthenticated
           ? {
               guestName: guestName.trim(),
@@ -166,7 +202,22 @@ export function BookingPage() {
         navigate(`/booking/confirmation/${booking.id}`);
       }
     } catch (err) {
-      toast.error(getErrorMessage(err));
+      // 409 from POST /appointments specifically means someone else took
+      // this exact staff/time between the client loading the calendar and
+      // hitting "confirm" — the server-side conflict check caught it. A
+      // generic error toast here would be misleading (it reads like
+      // "something broke"), and re-submitting with the same slot will
+      // just fail again. Send them back to the calendar with the stale
+      // slot cleared and force an immediate refetch of availability.
+      const isSlotConflict = err instanceof AxiosError && err.response?.status === 409;
+      if (isSlotConflict) {
+        toast.error('Sorry — that time was just booked by someone else. Please pick another.');
+        useBookingFlowStore.getState().setSlot(null);
+        queryClient.invalidateQueries({ queryKey: slotKeys.all });
+        useBookingFlowStore.getState().setStep(2);
+      } else {
+        toast.error(getErrorMessage(err));
+      }
     } finally {
       setSubmitting(false);
     }
@@ -302,6 +353,43 @@ export function BookingPage() {
                 onChange={(e) => setNotes(e.target.value)}
                 placeholder="Anything your stylist should know…"
               />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="promoCode" className="form-label">Promo code (optional)</label>
+              {appliedPromocode ? (
+                <div className="booking-promo-applied">
+                  <span>
+                    <strong>{appliedPromocode.code}</strong> applied —{' '}
+                    {appliedPromocode.type === 'PERCENTAGE'
+                      ? `${appliedPromocode.discount}% off`
+                      : `GHS ${appliedPromocode.discount.toFixed(2)} off`}
+                  </span>
+                  <button type="button" className="booking-promo-remove" onClick={handleRemovePromo}>
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="booking-promo-input">
+                  <input
+                    id="promoCode"
+                    className="form-input"
+                    value={promoCodeInput}
+                    onChange={(e) => setPromoCodeInput(e.target.value)}
+                    placeholder="Enter code"
+                  />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    onClick={handleApplyPromo}
+                    disabled={validatePromo.isPending || !promoCodeInput.trim()}
+                  >
+                    {validatePromo.isPending ? 'Checking…' : 'Apply'}
+                  </button>
+                </div>
+              )}
+              {/* Final discount is always recalculated server-side at
+                  payment time — this is a preview only, not a guarantee. */}
             </div>
 
             {paymentPolicy?.requireDeposit && (

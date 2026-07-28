@@ -1,4 +1,4 @@
-// src/types/models.ts
+ // src/types/models.ts
 
 // ===== Enums =====
 export type Role = 'ADMIN' | 'STAFF' | 'CLIENT';
@@ -8,7 +8,8 @@ export type AppointmentStatus =
   | 'CONFIRMED'
   | 'COMPLETED'
   | 'CANCELLED'
-  | 'RESCHEDULED';
+  | 'RESCHEDULED'
+  | 'NO_SHOW';
 
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
@@ -16,7 +17,10 @@ export type PaymentMethod = 'CASH' | 'CARD' | 'MOBILE_MONEY';
 
 export type PaymentProvider = 'PAYSTACK' | 'CASH' | 'MOBILE_MONEY';
 
-export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUNDED';
+// REFUND_PENDING: set automatically when a booking with a SUCCESS payment
+// gets cancelled — needs a human to actually process the refund and then
+// mark it REFUNDED.
+export type PaymentStatus = 'PENDING' | 'SUCCESS' | 'FAILED' | 'REFUND_PENDING' | 'REFUNDED';
 
 export type DiscountType = 'PERCENTAGE' | 'FIXED';
 
@@ -305,14 +309,6 @@ export interface RegisterPayload {
   role?: Role;
 }
 
-export interface CreateAppointmentPayload {
-  serviceId: number;
-  staffId?: number;
-  date: string;
-  notes?: string;
-  status?: AppointmentStatus;
-}
-
 export interface ReschedulePayload {
   newDate: string;
 }
@@ -400,4 +396,7 @@ export interface CreateAppointmentPayload {
   guestName?: string;
   guestEmail?: string;
   guestPhone?: string;
+  // Validated server-side (exists, active, within date range) at booking
+  // time — see resolvePromocodeId in appointmentController.js.
+  promoCode?: string;
 }

@@ -1,4 +1,4 @@
-import React from 'react';
+ import React from 'react';
 import type { AppointmentStatus, BookingStatus, PaymentStatus } from '../../types/models';
 import { Icons } from './icon';
 import { Loader2 } from 'lucide-react';
@@ -71,6 +71,7 @@ const STATUS_MAP: Record<AppointmentStatus | BookingStatus, BadgeVariant> = {
   COMPLETED:   'blue',
   CANCELLED:   'red',
   RESCHEDULED: 'gold',
+  NO_SHOW:     'red',
 };
 
 const STATUS_LABEL: Record<AppointmentStatus | BookingStatus, string> = {
@@ -79,6 +80,7 @@ const STATUS_LABEL: Record<AppointmentStatus | BookingStatus, string> = {
   COMPLETED:   'Completed',
   CANCELLED:   'Cancelled',
   RESCHEDULED: 'Rescheduled',
+  NO_SHOW:     'No-show',
 };
 
 interface StatusBadgeProps {
@@ -96,10 +98,11 @@ export function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
 
 /* ─── Payment Badge ────────────────────────────────────────── */
 const PAYMENT_MAP: Record<PaymentStatus, BadgeVariant> = {
-  PENDING:  'amber',
-  SUCCESS:  'green',
-  FAILED:   'red',
-  REFUNDED: 'muted',
+  PENDING:         'amber',
+  SUCCESS:         'green',
+  FAILED:          'red',
+  REFUND_PENDING:  'red',
+  REFUNDED:        'muted',
 };
 
 interface PaymentBadgeProps {
@@ -108,9 +111,13 @@ interface PaymentBadgeProps {
 }
 
 export function PaymentBadge({ status, size = 'md' }: PaymentBadgeProps) {
+  const label = status
+    .split('_')
+    .map((word) => word.charAt(0) + word.slice(1).toLowerCase())
+    .join(' ');
   return (
     <Badge variant={PAYMENT_MAP[status]} size={size} dot>
-      {status.charAt(0) + status.slice(1).toLowerCase()}
+      {label}
     </Badge>
   );
 }
