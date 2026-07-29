@@ -1,0 +1,46 @@
+diff a/src/pages/admin/ClientPage.tsx b/src/pages/admin/ClientPage.tsx	(rejected hunks)
+@@ -1,5 +1,7 @@
+ import { useState, useMemo } from 'react';
+ import { useClients, useDeleteClient } from '../../hooks/useClients';
++import { usePagination } from '../../hooks/usePagination';
++import { Pagination } from '../../components/ui/Pagination';
+ import { Modal, ConfirmModal } from '../../components/ui/Modal';
+ import { Spinner } from '../../components/ui/Spinner';
+ import { useUiStore } from '../../store/uiStore';
+@@ -88,6 +90,8 @@ export default function ClientsPage() {
+     );
+   }, [clients, search]);
+ 
++  const pagination = usePagination(filtered, 20);
++
+   async function handleDelete() {
+     if (!deleteTarget) return;
+     try {
+@@ -122,7 +126,7 @@ export default function ClientsPage() {
+         <div className="cl-page__grid">
+           {filtered.length === 0 ? (
+             <p className="cl-page__empty">No clients found.</p>
+-          ) : filtered.map((c) => {
++          ) : pagination.pageItems.map((c) => {
+             const initials = c.user?.name
+               ?.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2) ?? '?';
+             return (
+@@ -148,6 +152,18 @@ export default function ClientsPage() {
+         </div>
+       )}
+ 
++      {!isLoading && filtered.length > 0 && (
++        <Pagination
++          page={pagination.page}
++          pageCount={pagination.pageCount}
++          onPageChange={pagination.setPage}
++          total={pagination.total}
++          pageSize={pagination.pageSize}
++          onPageSizeChange={pagination.setPageSize}
++          pageSizeOptions={[20, 40, 80]}
++        />
++      )}
++
+       {viewClient && <ClientDetailModal client={viewClient} onClose={() => setViewClient(null)} />}
+ 
+       {deleteTarget && (

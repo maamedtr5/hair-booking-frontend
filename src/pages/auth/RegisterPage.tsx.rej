@@ -1,0 +1,221 @@
+diff a/src/pages/auth/RegisterPage.tsx b/src/pages/auth/RegisterPage.tsx	(rejected hunks)
+@@ -30,6 +30,19 @@ function resolveRedirect(role: Role, from?: string): string {
+   return isAllowed ? from : home;
+ }
+ 
++function PasswordToggleButton({ shown, onToggle }: { shown: boolean; onToggle: () => void }) {
++  return (
++    <button
++      type="button"
++      className="password-toggle"
++      onClick={onToggle}
++      aria-label={shown ? 'Hide password' : 'Show password'}
++    >
++      {shown ? '👁' : '👁‍🗨'}
++    </button>
++  );
++}
++
+ export function RegisterPage() {
+   const { register } = useAuth();
+   const navigate = useNavigate();
+@@ -64,109 +77,106 @@ export function RegisterPage() {
+   };
+ 
+   return (
+-    <div className="register-page">
+-      <div className="register-card">
+-        {/* Logo */}
+-        <Link to="/" className="register-logo">
+-          <div className="register-logo-mark">L</div>
+-          <span className="register-logo-name">Locs Allure</span>
+-        </Link>
+-
+-        {/* Heading */}
+-        <h1 className="register-title">Create account</h1>
+-        <p className="register-sub">Join Locs Allure and book your first appointment</p>
+-
+-        {/* Form */}
+-        <form onSubmit={handleSubmit(onSubmit)} noValidate>
+-          <div className="register-fields">
+-            {serverError && (
+-              <div className="server-error" role="alert">
+-                {serverError}
++    // Reuses the exact same .auth-page / .auth-hero / .auth-form-panel
++    // layout as LoginPage so the two pages are visually consistent
++    // instead of drifting into two different, half-styled designs.
++    <div className="auth-page">
++      <div className="auth-hero">
++        <div className="auth-hero-content">
++          <div className="auth-hero-mark">L</div>
++          <h1 className="auth-hero-title">Locs Allure</h1>
++          <p className="auth-hero-sub">
++            Premium hair salon in the heart of Madina Estates, Accra.
++            Book, manage, and experience luxury hair care.
++          </p>
++          <p className="auth-hero-quote">
++            "Where every strand tells a story of beauty and culture."
++          </p>
++        </div>
++      </div>
++
++      <div className="auth-form-panel">
++        <div className="auth-form-card">
++          <h2 className="auth-form-heading">Create your account</h2>
++          <p className="auth-form-sub">Join Locs Allure and book your first appointment</p>
++
++          <form onSubmit={handleSubmit(onSubmit)} noValidate>
++            <div className="auth-fields">
++              {serverError && (
++                <div className="auth-server-error" role="alert">
++                  {serverError}
++                </div>
++              )}
++
++              <div className="auth-fields-row">
++                <Input
++                  label="Full name"
++                  type="text"
++                  autoComplete="name"
++                  placeholder="Your full name"
++                  error={errors.name?.message}
++                  {...formRegister('name')}
++                />
++                <Input
++                  label="Phone (optional)"
++                  type="tel"
++                  autoComplete="tel"
++                  placeholder="+233 XX XXX XXXX"
++                  error={errors.phone?.message}
++                  {...formRegister('phone')}
++                />
+               </div>
+-            )}
+ 
+-            <div className="register-row">
+               <Input
+-                label="Full name"
+-                type="text"
+-                autoComplete="name"
+-                placeholder="Ama Mensah"
+-                error={errors.name?.message}
+-                {...formRegister('name')}
++                label="Email address"
++                type="email"
++                autoComplete="email"
++                placeholder="you@example.com"
++                error={errors.email?.message}
++                {...formRegister('email')}
+               />
++
++              <Input
++                label="Password"
++                type={showPassword ? 'text' : 'password'}
++                autoComplete="new-password"
++                placeholder="Min. 8 characters"
++                error={errors.password?.message}
++                hint="Must include an uppercase letter, a lowercase letter, a number, and a symbol"
++                rightIcon={<PasswordToggleButton shown={showPassword} onToggle={() => setShowPassword((p) => !p)} />}
++                {...formRegister('password')}
++              />
++
+               <Input
+-                label="Phone (optional)"
+-                type="tel"
+-                autoComplete="tel"
+-                placeholder="+233 XX XXX XXXX"
+-                error={errors.phone?.message}
+-                {...formRegister('phone')}
++                label="Confirm password"
++                type={showPassword ? 'text' : 'password'}
++                autoComplete="new-password"
++                placeholder="Repeat password"
++                error={errors.confirmPassword?.message}
++                {...formRegister('confirmPassword')}
+               />
++
++              <Button
++                type="submit"
++                fullWidth
++                size="lg"
++                loading={isSubmitting}
++                style={{ marginTop: 4 }}
++              >
++                Create Account
++              </Button>
+             </div>
++          </form>
+ 
+-            <Input
+-              label="Email address"
+-              type="email"
+-              autoComplete="email"
+-              placeholder="you@example.com"
+-              error={errors.email?.message}
+-              {...formRegister('email')}
+-            />
+-
+-            <Input
+-              label="Password"
+-              type={showPassword ? 'text' : 'password'}
+-              autoComplete="new-password"
+-              placeholder="Min. 8 characters"
+-              error={errors.password?.message}
+-              hint="Must contain an uppercase letter and a number"
+-              rightIcon={
+-                <button
+-                  type="button"
+-                  onClick={() => setShowPassword((p) => !p)}
+-                  style={{
+-                    background: 'none',
+-                    border: 'none',
+-                    cursor: 'pointer',
+-                    color: 'var(--text-muted)',
+-                    fontSize: 14,
+-                  }}
+-                  aria-label={showPassword ? 'Hide' : 'Show'}
+-                >
+-                  {showPassword ? '👁' : '👁‍🗨'}
+-                </button>
+-              }
+-              {...formRegister('password')}
+-            />
+-
+-            <Input
+-              label="Confirm password"
+-              type={showPassword ? 'text' : 'password'}
+-              autoComplete="new-password"
+-              placeholder="Repeat password"
+-              error={errors.confirmPassword?.message}
+-              {...formRegister('confirmPassword')}
+-            />
+-
+-            <Button
+-              type="submit"
+-              fullWidth
+-              size="lg"
+-              loading={isSubmitting}
+-              style={{ marginTop: 4 }}
+-            >
+-              Create Account
+-            </Button>
+-          </div>
+-        </form>
++          <div className="auth-divider">or</div>
+ 
+-        {/* Footer */}
+-        <div className="register-footer">
+-          Already have an account? <Link to="/login">Sign in</Link>
++          <div className="auth-form-footer">
++            Already have an account? <Link to="/login">Sign in</Link>
++          </div>
++          <p className="auth-form-terms">
++            By creating an account you agree to Locs Allure's terms of service and privacy policy.
++          </p>
+         </div>
+-        <p className="register-terms">
+-          By creating an account you agree to Locs Allure's terms of service and privacy policy.
+-        </p>
+       </div>
+     </div>
+   );

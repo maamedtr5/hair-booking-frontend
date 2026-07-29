@@ -7,6 +7,8 @@ import {
   useDeletePromoCode,
 } from '../../hooks/usePromocdes';
 import { Modal, ConfirmModal } from '../../components/ui/Modal';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/ui/Pagination';
 import { Spinner } from '../../components/ui/Spinner';
 import { useUiStore } from '../../store/uiStore';
 import type { Promocode, DiscountType } from '../../types/models';
@@ -203,6 +205,7 @@ export default function PromocodesPage() {
   const { addToast } = useUiStore();
   const { data: promocodes, isLoading } = usePromoCodes();
   const deleteMutation = useDeletePromoCode();
+  const pagination = usePagination(promocodes ?? [], 12);
 
   const [showForm, setShowForm] = useState(false);
   const [editTarget, setEditTarget] = useState<Promocode | null>(null);
@@ -237,7 +240,7 @@ export default function PromocodesPage() {
         <div className="promo-page__grid">
           {(promocodes ?? []).length === 0 ? (
             <p className="promo-page__empty">No promo codes yet.</p>
-          ) : (promocodes ?? []).map((promo) => {
+          ) : pagination.pageItems.map((promo) => {
             const valid = isCurrentlyValid(promo);
             return (
               <div key={promo.id} className={`promo-card ${!promo.isActive ? 'promo-card--inactive' : ''}`}>
@@ -268,6 +271,18 @@ export default function PromocodesPage() {
             );
           })}
         </div>
+      )}
+
+      {!isLoading && (promocodes ?? []).length > 0 && (
+        <Pagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          onPageChange={pagination.setPage}
+          total={pagination.total}
+          pageSize={pagination.pageSize}
+          onPageSizeChange={pagination.setPageSize}
+          pageSizeOptions={[12, 24, 48]}
+        />
       )}
 
       {showForm && <PromoFormModal onClose={() => setShowForm(false)} />}

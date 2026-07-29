@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import type { AxiosError } from 'axios';
 import * as appointmentsApi from '../api/appointments';
 import type { AppointmentStatus, CreateAppointmentPayload, ReschedulePayload } from '../types/models';
 import { toast } from '../store/uiStore';
@@ -73,6 +74,18 @@ export function useCreateAppointment() {
   return useMutation({
     mutationFn: (payload: CreateAppointmentPayload) =>
       appointmentsApi.createAppointment(payload),
+    // Transient slot-booking races surface as a 409 with this specific
+    // message (see withConflictCheck on the backend) — safe to retry
+    // automatically since nothing was partially applied. Any other
+    // error (real validation failures, genuine double-booking, etc.)
+    // is left alone and surfaces to the user immediately.
+    retry: (failureCount, err) => {
+      if (failureCount >= 1) return false;
+      const status = (err as AxiosError)?.response?.status;
+      const message = getErrorMessage(err);
+      return status === 409 && message.includes('being booked by someone else');
+    },
+    retryDelay: 300,
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: appointmentKeys.all });
       toast.success('Appointment created successfully');
@@ -143,5 +156,74 @@ export function useSendReminder() {
     mutationFn: (id: number) => appointmentsApi.sendReminder(id),
     onSuccess: () => toast.success('Reminder sent'),
     onError: (err) => toast.error(getErrorMessage(err)),
+  });
+}
+
+// ─── Claim queue (staff self-service pickup) ────────────────────────────────
+
+export const unclaimedQueueKey = ['appointments', 'queue', 'unclaimed'] as const;
+
+export function useUnclaimedAppointments(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: unclaimedQueueKey,
+    queryFn: appointmentsApi.getUnclaimedAppointments,
+    // The whole point of this list is "the moment someone's free" — poll
+    // it so a newly-confirmed, unassigned appointment shows up without
+    // staff having to manually refresh the page.
+    refetchInterval: 30_000,
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useClaimAppointment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.claimAppointment(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: unclaimedQueueKey });
+      qc.invalidateQueries({ queryKey: appointmentKeys.all });
+      toast.success('Appointment claimed — added to your schedule.');
+    },
+    onError: (err) => {
+      // A 409 here almost always means someone else claimed it first, or
+      // it now overlaps something newly on the claimer's own schedule —
+      // either way the queue is stale, so refresh it along with the error.
+      qc.invalidateQueries({ queryKey: unclaimedQueueKey });
+      toast.error(getErrorMessage(err));
+    },
+  });
+}
+// ─── Claim queue (staff self-service pickup) ────────────────────────────────
+
+export const unclaimedQueueKey = ['appointments', 'queue', 'unclaimed'] as const;
+
+export function useUnclaimedAppointments(options?: { enabled?: boolean }) {
+  return useQuery({
+    queryKey: unclaimedQueueKey,
+    queryFn: appointmentsApi.getUnclaimedAppointments,
+    // The whole point of this list is "the moment someone's free" — poll
+    // it so a newly-confirmed, unassigned appointment shows up without
+    // staff having to manually refresh the page.
+    refetchInterval: 30_000,
+    enabled: options?.enabled ?? true,
+  });
+}
+
+export function useClaimAppointment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) => appointmentsApi.claimAppointment(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: unclaimedQueueKey });
+      qc.invalidateQueries({ queryKey: appointmentKeys.all });
+      toast.success('Appointment claimed — added to your schedule.');
+    },
+    onError: (err) => {
+      // A 409 here almost always means someone else claimed it first, or
+      // it now overlaps something newly on the claimer's own schedule —
+      // either way the queue is stale, so refresh it along with the error.
+      qc.invalidateQueries({ queryKey: unclaimedQueueKey });
+      toast.error(getErrorMessage(err));
+    },
   });
 }

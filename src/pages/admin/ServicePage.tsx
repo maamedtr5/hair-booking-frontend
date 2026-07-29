@@ -3,6 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import type { Resolver } from 'react-hook-form';
 import { useServices, useCreateService, useUpdateService, useDeleteService } from '../../hooks/useServices';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../../components/ui/Pagination';
 import { Modal, ConfirmModal } from '../../components/ui/Modal';
 import { Spinner } from '../../components/ui/Spinner';
 import { useUiStore } from '../../store/uiStore';
@@ -108,6 +110,7 @@ export default function ServicesPage() {
   const { addToast } = useUiStore();
   const { data: services, isLoading } = useServices();
   const deleteMutation = useDeleteService();
+  const pagination = usePagination(services ?? [], 15);
 
   const [showForm,     setShowForm]     = useState(false);
   const [editTarget,   setEditTarget]   = useState<Service | null>(null);
@@ -164,7 +167,7 @@ export default function ServicesPage() {
             <tbody>
               {(services ?? []).length === 0 ? (
                 <tr><td colSpan={5} className="svc-table__empty">No services yet. Add your first service.</td></tr>
-              ) : (services ?? []).map((s: Service) => (
+              ) : pagination.pageItems.map((s: Service) => (
                 <tr key={s.id} className="svc-table__row">
                   <td>
                     <div className="svc-table__name">{s.name}</div>
@@ -192,6 +195,18 @@ export default function ServicesPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {!isLoading && (services ?? []).length > 0 && (
+        <Pagination
+          page={pagination.page}
+          pageCount={pagination.pageCount}
+          onPageChange={pagination.setPage}
+          total={pagination.total}
+          pageSize={pagination.pageSize}
+          onPageSizeChange={pagination.setPageSize}
+          pageSizeOptions={[15, 30, 60]}
+        />
       )}
 
       {(showForm || editTarget) && (

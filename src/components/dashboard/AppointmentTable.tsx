@@ -1,13 +1,15 @@
 import { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppointments, useUpdateAppointment } from '../../hooks/useAppointments';
+import { usePagination } from '../../hooks/usePagination';
+import { Pagination } from '../ui/Pagination';
 import { StatusBadge } from '../ui/Badge';
 import { Spinner } from '../ui/Spinner';
 import { ConfirmModal } from '../ui/Modal';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { useUiStore } from '../../store/uiStore';
 import type { Appointment, AppointmentStatus } from '../../types';
-
+ 
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GH', { weekday: 'short', month: 'short', day: 'numeric' });
 }
@@ -85,10 +87,19 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'ALL'>('ALL');
   const [search, setSearch] = useState('');
   const [pendingAction, setPendingAction] = useState<{ id: number; type: 'confirm' | 'complete' | 'cancel' } | null>(null);
-  const [viewAppointment, setViewAppointment] = useState<Appointment | null>(null);
+  const [viewAppointmentId, setViewAppointmentId] = useState<number | null>(null);
 
   const { data: appointments, isLoading, isError } = useAppointments();
   const updateMutation = useUpdateAppointment();
+
+  // Always look the viewed appointment up in the live query data by id,
+  // rather than holding onto the row object captured at click-time. A
+  // snapshotted object goes stale the moment a mutation (status change,
+  // manual payment) invalidates and refetches the list — the modal would
+  // keep showing the old status/payment even though the save worked.
+  const viewAppointment = viewAppointmentId != null
+    ? appointments?.find((a: Appointment) => a.id === viewAppointmentId) ?? null
+    : null;
 
   const filtered = useMemo(() => {
     if (!appointments) return [];
@@ -106,6 +117,12 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
       })
       .slice(0, limit ?? appointments.length);
   }, [appointments, statusFilter, search, limit]);
+
+  const pagination = usePagination(filtered, 10);
+  // The dashboard widget passes `limit` and renders every filtered row
+  // directly (it's already a short "recent appointments" list); only the
+  // full admin table (no `limit`) actually paginates.
+  const rows = limit ? filtered : pagination.pageItems;
 
   async function handleStatusChange(id: number, newStatus: AppointmentStatus) {
     try {
@@ -173,7 +190,7 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((appt: Appointment) => {
+                {rows.map((appt: Appointment) => {
                   // Client lives at appointment.booking.client
                   const clientName = appt.booking?.client?.user?.name;
                   return (
@@ -185,7 +202,13 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
                         <span>{clientName ?? '—'}</span>
                       </td>
                       <td className="appt-table__cell">{appt.service?.name ?? '—'}</td>
-                      <td className="appt-table__cell">{appt.staff?.user?.name ?? 'Unassigned'}</td>
+                      <td className="appt-table__cell">
+                        {appt.staff?.user?.name ?? (
+                          appt.status === 'CONFIRMED'
+                            ? <span className="appt-table__queued">Open to claim</span>
+                            : 'Unassigned'
+                        )}
+                      </td>
                       <td className="appt-table__cell appt-table__cell--date">
                         <span>{formatDate(appt.date)}</span>
                         <span className="appt-table__time">{formatTime(appt.date)}</span>
@@ -197,7 +220,7 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
                       <td className="appt-table__cell appt-table__cell--actions">
                         <RowActions
                           appointment={appt}
-                          onView={() => setViewAppointment(appt)}
+                          onView={() => setViewAppointmentId(appt.id)}
                           onConfirm={(id) => setPendingAction({ id, type: 'confirm' })}
                           onComplete={(id) => setPendingAction({ id, type: 'complete' })}
                           onCancel={(id) => setPendingAction({ id, type: 'cancel' })}
@@ -211,6 +234,17 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
           )}
         </div>
 
+        {!limit && filtered.length > 0 && (
+          <Pagination
+            page={pagination.page}
+            pageCount={pagination.pageCount}
+            onPageChange={pagination.setPage}
+            total={pagination.total}
+            pageSize={pagination.pageSize}
+            onPageSizeChange={pagination.setPageSize}
+          />
+        )}
+
         {limit && (appointments?.length ?? 0) > limit && (
           <div className="appt-table__view-all">
             <button type="button" onClick={() => navigate('/dashboard/appointments')} className="btn btn--ghost btn--sm">
@@ -221,7 +255,7 @@ export function AppointmentTable({ limit }: AppointmentTableProps) {
       </div>
 
       {viewAppointment && (
-        <AppointmentDetailModal appointment={viewAppointment} onClose={() => setViewAppointment(null)} />
+        <AppointmentDetailModal appointment={viewAppointment} onClose={() => setViewAppointmentId(null)} />
       )}
 
       {pendingAction && (

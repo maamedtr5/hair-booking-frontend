@@ -1,0 +1,55 @@
+diff a/src/pages/admin/Staff.tsx b/src/pages/admin/Staff.tsx	(rejected hunks)
+@@ -4,6 +4,8 @@ import { zodResolver } from '@hookform/resolvers/zod';
+ import { UserPlus, Edit2, Trash2, Mail } from 'lucide-react';
+ 
+ import { useStaff, useCreateStaff, useUpdateStaff, useDeleteStaff } from '../../hooks/useStaff';
++import { usePagination } from '../../hooks/usePagination';
++import { Pagination } from '../../components/ui/Pagination';
+ import { usersApi } from '../../api/users';
+ import { useUiStore } from '../../store/uiStore';
+ import { PageSpinner } from '../../components/ui/Spinner';
+@@ -122,7 +124,7 @@ function CreateStaffModal({
+       <form id="staff-form" onSubmit={onSubmit} noValidate>
+         <div style={styles.formFields}>
+           <div style={styles.formRow}>
+-            <Input label="Full name" placeholder="Ama Asante" error={errors.name?.message} {...register('name')} />
++            <Input label="Full name" placeholder="Stylist's full name" error={errors.name?.message} {...register('name')} />
+             <Input label="Email" type="email" placeholder="ama@example.com" error={errors.email?.message} {...register('email')} />
+       
+             <label style={styles.fieldLabel}>Bio (optional)</label>
+@@ -140,6 +142,7 @@ export function StaffPage() {
+   const createMutation = useCreateStaff();
+   const updateMutation = useUpdateStaff();
+   const deleteMutation = useDeleteStaff();
++  const pagination = usePagination(staff, 20);
+ 
+   const [createOpen, setCreateOpen] = useState(false);
+   const [editTarget, setEditTarget] = useState<Staff | null>(null);
+@@ -206,7 +209,7 @@ export function StaffPage() {
+             {staff.length === 0 ? (
+               <EmptyState onAdd={() => setCreateOpen(true)} />
+             ) : (
+-              staff.map((member) => (
++              pagination.pageItems.map((member) => (
+                 <StaffCard
+                   key={member.id}
+                   member={member}
+@@ -217,6 +220,18 @@ export function StaffPage() {
+             )}
+           </div>
+         )}
++
++        {!isLoading && staff.length > 0 && (
++          <Pagination
++            page={pagination.page}
++            pageCount={pagination.pageCount}
++            onPageChange={pagination.setPage}
++            total={pagination.total}
++            pageSize={pagination.pageSize}
++            onPageSizeChange={pagination.setPageSize}
++            pageSizeOptions={[20, 40, 80]}
++          />
++        )}
+       </div>
+ 
+       {/* Create Staff Modal */}

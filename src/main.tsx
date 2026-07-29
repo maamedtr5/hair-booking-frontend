@@ -12,7 +12,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./store/queryClient";
 import { AuthProvider } from "./store/AuthContext";
 import { useAuthContext } from "./hooks/useAuthcontext";
-import { ProtectedRoute } from "./router/ProtectedRoute";
+import { ProtectedRoute, RedirectStaffAndAdminFromBooking } from "./router/ProtectedRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { AppToastContainer } from "./components/ui/AppToastContainer";
 import { Spinner } from "./components/ui/Spinner";
@@ -59,7 +59,7 @@ const Settings = lazy(() =>
 );
 const ClientsPage = lazy(() => import("./pages/admin/ClientPage"));
 const ServicesPage = lazy(() => import("./pages/admin/ServicePage"));
-const PromocodesPage = lazy(() => import("./pages/admin/Promocodes "));
+const PromocodesPage = lazy(() => import("./pages/admin/Promocodes"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const NotificationsPage = lazy(() => import("./pages/admin/Notification"));
 
@@ -67,6 +67,9 @@ const NotificationsPage = lazy(() => import("./pages/admin/Notification"));
 const StaffDashboard = lazy(() => import("./pages/staff/Staffdashboard"));
 const StaffSchedule = lazy(() =>
   import("./pages/staff/StaffSchedule").then((m) => ({ default: m.StaffSchedule }))
+);
+const StaffQueue = lazy(() =>
+  import("./pages/staff/StaffQueue").then((m) => ({ default: m.StaffQueue }))
 );
 const ClientNotes = lazy(() =>
   import("./pages/staff/ClientNotes").then((m) => ({ default: m.ClientNotes }))
@@ -116,8 +119,13 @@ const router = createBrowserRouter([
       {
         element: <ClientLayout />,
         children: [
-          { path: "/book",                           element: withSuspense(<BookingPage />) },
-          { path: "/booking/confirmation/:bookingId", element: withSuspense(<ConfirmationPage />) },
+          {
+            element: <RedirectStaffAndAdminFromBooking />,
+            children: [
+              { path: "/book",                           element: withSuspense(<BookingPage />) },
+              { path: "/booking/confirmation/:bookingId", element: withSuspense(<ConfirmationPage />) },
+            ],
+          },
 
           {
             element: <ProtectedRoute roles={["CLIENT"]} />,
@@ -160,6 +168,7 @@ const router = createBrowserRouter([
             children: [
               { path: "/staff/dashboard",               element: withSuspense(<StaffDashboard />) },
               { path: "/staff/schedule",                element: withSuspense(<StaffSchedule />) },
+              { path: "/staff/queue",                   element: withSuspense(<StaffQueue />) },
               { path: "/staff/clients/:clientId/notes", element: withSuspense(<ClientNotes />) },
             ],
           },

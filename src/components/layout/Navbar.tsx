@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { Menu, X, Scissors } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
+import { useUnclaimedAppointments } from '../../hooks/useAppointments';
 import { Button } from '../ui/Button';
 
 
@@ -18,6 +19,15 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
   const { isAuthenticated, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Badge count for the staff "Available" queue link. Only actually
+  // fetches when it'll be shown — every other variant passes
+  // enabled: false so this never fires an unnecessary (and, for a
+  // CLIENT, unauthorized) request.
+  const { data: unclaimedQueue } = useUnclaimedAppointments({
+    enabled: variant === 'staff' && isAuthenticated,
+  });
+  const unclaimedCount = unclaimedQueue?.length ?? 0;
 
   // Scroll listener — legitimate external system sync
   useEffect(() => {
@@ -59,6 +69,7 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
    if (variant === 'staff') return [
       { to: '/staff/dashboard', label: 'Dashboard'   },
       { to: '/staff/schedule',  label: 'My Schedule' },
+      { to: '/staff/queue',     label: 'Available'    },
     ];
     if (variant === 'client') return [
       { to: '/book',        label: 'Book Now'    },
@@ -94,6 +105,9 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
               onClick={action ?? closeMenu}
             >
               {label}
+              {to === '/staff/queue' && unclaimedCount > 0 && (
+                <span className="navbar-link__badge">{unclaimedCount}</span>
+              )}
             </NavLink>
           ))}
         </nav>
@@ -133,6 +147,9 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
             onClick={action ?? closeMenu}
           >
             {label}
+            {to === '/staff/queue' && unclaimedCount > 0 && (
+              <span className="navbar-link__badge">{unclaimedCount}</span>
+            )}
           </NavLink>
         ))}
 

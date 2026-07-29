@@ -83,6 +83,14 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(({
         }
         .input-icon-left  { left: 12px; }
         .input-icon-right { right: 12px; }
+        /* Decorative icons (svgs/glyphs) shouldn't intercept clicks meant
+           for the input, but an icon slot can also hold an interactive
+           control (e.g. the password show/hide toggle) — that control
+           must still receive pointer events itself. */
+        .input-icon button,
+        .input-icon [role="button"] {
+          pointer-events: auto;
+        }
 
         /* Feedback */
         .input-error {
