@@ -159,6 +159,7 @@ export function useSendReminder() {
   });
 }
 
+
 // ─── Claim queue (staff self-service pickup) ────────────────────────────────
 
 export const unclaimedQueueKey = ['appointments', 'queue', 'unclaimed'] as const;
@@ -166,7 +167,8 @@ export const unclaimedQueueKey = ['appointments', 'queue', 'unclaimed'] as const
 export function useUnclaimedAppointments(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: unclaimedQueueKey,
-    queryFn: appointmentsApi.getUnclaimedAppointments,
+    queryFn: () =>
+      appointmentsApi.getAppointmentsByStatus('UNCLAIMED' as AppointmentStatus),
     // The whole point of this list is "the moment someone's free" — poll
     // it so a newly-confirmed, unassigned appointment shows up without
     // staff having to manually refresh the page.
@@ -178,41 +180,10 @@ export function useUnclaimedAppointments(options?: { enabled?: boolean }) {
 export function useClaimAppointment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => appointmentsApi.claimAppointment(id),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: unclaimedQueueKey });
-      qc.invalidateQueries({ queryKey: appointmentKeys.all });
-      toast.success('Appointment claimed — added to your schedule.');
-    },
-    onError: (err) => {
-      // A 409 here almost always means someone else claimed it first, or
-      // it now overlaps something newly on the claimer's own schedule —
-      // either way the queue is stale, so refresh it along with the error.
-      qc.invalidateQueries({ queryKey: unclaimedQueueKey });
-      toast.error(getErrorMessage(err));
-    },
-  });
-}
-// ─── Claim queue (staff self-service pickup) ────────────────────────────────
-
-export const unclaimedQueueKey = ['appointments', 'queue', 'unclaimed'] as const;
-
-export function useUnclaimedAppointments(options?: { enabled?: boolean }) {
-  return useQuery({
-    queryKey: unclaimedQueueKey,
-    queryFn: appointmentsApi.getUnclaimedAppointments,
-    // The whole point of this list is "the moment someone's free" — poll
-    // it so a newly-confirmed, unassigned appointment shows up without
-    // staff having to manually refresh the page.
-    refetchInterval: 30_000,
-    enabled: options?.enabled ?? true,
-  });
-}
-
-export function useClaimAppointment() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (id: number) => appointmentsApi.claimAppointment(id),
+    mutationFn: (id: number) =>
+      appointmentsApi.updateAppointment(id, {
+        status: 'CLAIMED' as AppointmentStatus,
+      }),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: unclaimedQueueKey });
       qc.invalidateQueries({ queryKey: appointmentKeys.all });
