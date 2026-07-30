@@ -72,3 +72,18 @@ export async function sendReminder(id: number): Promise<void> {
 export async function cancelReminder(id: number): Promise<void> {
   await apiClient.delete(`/appointments/${id}/reminder`);
 }
+
+/** GET /appointments/queue/unclaimed — staff/admin only. Confirmed
+ *  appointments with no staff assigned yet, upcoming only. */
+export async function getUnclaimedAppointments(): Promise<Appointment[]> {
+  const { data } = await apiClient.get<ApiResponse<Appointment[]>>('/appointments/queue/unclaimed');
+  return data.data ?? [];
+}
+
+/** POST /appointments/:id/claim — staff self-service pickup. Fails with
+ *  409 if someone else claimed it first, or if it conflicts with the
+ *  claiming staff member's own schedule. */
+export async function claimAppointment(id: number): Promise<Appointment> {
+  const { data } = await apiClient.post<ApiResponse<Appointment>>(`/appointments/${id}/claim`);
+  return data.data!;
+}

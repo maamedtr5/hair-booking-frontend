@@ -9,7 +9,7 @@ import { ConfirmModal } from '../ui/Modal';
 import { AppointmentDetailModal } from './AppointmentDetailModal';
 import { useUiStore } from '../../store/uiStore';
 import type { Appointment, AppointmentStatus } from '../../types';
- 
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleDateString('en-GH', { weekday: 'short', month: 'short', day: 'numeric' });
 }

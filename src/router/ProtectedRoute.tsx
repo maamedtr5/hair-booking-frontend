@@ -34,6 +34,13 @@ export function ProtectedRoute({ roles = [] }: ProtectedRouteProps) {
   return <Outlet />;
 }
 
+// The public booking flow (/book, /booking/confirmation/:id) is meant for
+// guests and clients only. Admin and staff are authenticated into their
+// own portals and have no reason to land on the guest-facing booking
+// pages — previously nothing stopped them from navigating there (or being
+// linked there) and seeing a fully interactive "book now" flow meant for
+// customers. This sends them back to their own dashboard instead; anyone
+// not logged in, or logged in as a CLIENT, passes through unaffected.
 export function RedirectStaffAndAdminFromBooking() {
   const { isAuthenticated, isInitializing, user } = useAuth();
 

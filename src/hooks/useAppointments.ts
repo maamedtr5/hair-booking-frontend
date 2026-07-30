@@ -159,7 +159,6 @@ export function useSendReminder() {
   });
 }
 
-
 // ─── Claim queue (staff self-service pickup) ────────────────────────────────
 
 export const unclaimedQueueKey = ['appointments', 'queue', 'unclaimed'] as const;
@@ -167,8 +166,7 @@ export const unclaimedQueueKey = ['appointments', 'queue', 'unclaimed'] as const
 export function useUnclaimedAppointments(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: unclaimedQueueKey,
-    queryFn: () =>
-      appointmentsApi.getAppointmentsByStatus('UNCLAIMED' as AppointmentStatus),
+    queryFn: appointmentsApi.getUnclaimedAppointments,
     // The whole point of this list is "the moment someone's free" — poll
     // it so a newly-confirmed, unassigned appointment shows up without
     // staff having to manually refresh the page.
@@ -180,10 +178,7 @@ export function useUnclaimedAppointments(options?: { enabled?: boolean }) {
 export function useClaimAppointment() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) =>
-      appointmentsApi.updateAppointment(id, {
-        status: 'CLAIMED' as AppointmentStatus,
-      }),
+    mutationFn: (id: number) => appointmentsApi.claimAppointment(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: unclaimedQueueKey });
       qc.invalidateQueries({ queryKey: appointmentKeys.all });
