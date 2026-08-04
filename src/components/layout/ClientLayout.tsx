@@ -1,7 +1,6 @@
 // components/layout/ClientLayout.tsx
 import { NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../hooks/useAuthcontext';
-import { ToastContainer } from '../ui/Toast';
 
 export default function ClientLayout() {
   const { user, isAuthenticated, logout } = useAuthContext();
@@ -59,8 +58,6 @@ export default function ClientLayout() {
       <main className="client-main">
         <Outlet />
       </main>
-
-      <ToastContainer />
     </div>
   );
 }

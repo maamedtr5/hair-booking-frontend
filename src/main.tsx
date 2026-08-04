@@ -14,7 +14,7 @@ import { AuthProvider } from "./store/AuthContext";
 import { useAuthContext } from "./hooks/useAuthcontext";
 import { ProtectedRoute, RedirectStaffAndAdminFromBooking } from "./router/ProtectedRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
-import { AppToastContainer } from "./components/ui/AppToastContainer";
+import { ToastContainer } from "./components/ui/Toast";
 import { Spinner } from "./components/ui/Spinner";
 import "./index.css";
 
@@ -188,7 +188,7 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     <ErrorBoundary>
       <AuthProvider>
         <QueryClientProvider client={queryClient}>
-          <AppToastContainer />
+          <ToastContainer />
           <RouterProvider router={router} />
         </QueryClientProvider>
       </AuthProvider>

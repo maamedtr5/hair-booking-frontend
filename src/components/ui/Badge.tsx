@@ -1,4 +1,4 @@
- import React from 'react';
+import React from 'react';
 import type { AppointmentStatus, BookingStatus, PaymentStatus } from '../../types/models';
 import { Icons } from './icon';
 import { Loader2 } from 'lucide-react';
@@ -72,6 +72,7 @@ const STATUS_MAP: Record<AppointmentStatus | BookingStatus, BadgeVariant> = {
   CANCELLED:   'red',
   RESCHEDULED: 'gold',
   NO_SHOW:     'red',
+  WAITLISTED:  'amber',
 };
 
 const STATUS_LABEL: Record<AppointmentStatus | BookingStatus, string> = {
@@ -81,6 +82,7 @@ const STATUS_LABEL: Record<AppointmentStatus | BookingStatus, string> = {
   CANCELLED:   'Cancelled',
   RESCHEDULED: 'Rescheduled',
   NO_SHOW:     'No-show',
+  WAITLISTED:  'Waitlisted',
 };
 
 interface StatusBadgeProps {

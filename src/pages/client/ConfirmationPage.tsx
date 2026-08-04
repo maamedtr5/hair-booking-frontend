@@ -118,9 +118,54 @@ export function ConfirmationPage() {
     );
   }
 
-  // ── Confirmed ────────────────────────────────────────────────────────
+  // ── Waitlisted — every stylist was already booked for this time ──────
   const service = booking.appointment?.service;
   const staff = booking.appointment?.staff;
+
+  if (booking.appointment?.status === 'WAITLISTED') {
+    return (
+      <div className="confirmation-page">
+        <div className="confirmation-card">
+          <Clock size={40} className="confirmation-icon confirmation-icon--pending" />
+          <h1 className="confirmation-title">You're on the waitlist</h1>
+          <p className="confirmation-sub">
+            Every stylist is already booked for your requested time. We've saved your
+            spot on the waitlist and will email and text you the moment a slot opens up —
+            no action needed from you right now.
+          </p>
+
+          <div className="confirmation-ref">
+            <div>Booking Reference</div>
+            <div className="confirmation-ref__id">#{booking.id}</div>
+          </div>
+
+          <div className="confirmation-details">
+            <div className="confirmation-details__row">
+              <span>Service</span>
+              <span>{service?.name ?? '—'}</span>
+            </div>
+            <div className="confirmation-details__row">
+              <span>Requested time</span>
+              <span>
+                {booking.appointment?.date
+                  ? new Date(booking.appointment.date).toLocaleString('en-GH', {
+                      weekday: 'short', month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })
+                  : '—'}
+              </span>
+            </div>
+          </div>
+
+          <div className="confirmation-actions">
+            <Link to="/my/bookings" className="btn btn--primary btn--full">View My Bookings</Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Confirmed ────────────────────────────────────────────────────────
 
   return (
     <div className="confirmation-page">

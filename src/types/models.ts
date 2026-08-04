@@ -9,7 +9,8 @@ export type AppointmentStatus =
   | 'COMPLETED'
   | 'CANCELLED'
   | 'RESCHEDULED'
-  | 'NO_SHOW';
+  | 'NO_SHOW'
+  | 'WAITLISTED';
 
 export type BookingStatus = 'PENDING' | 'CONFIRMED' | 'COMPLETED' | 'CANCELLED';
 
@@ -122,6 +123,11 @@ export interface Appointment {
   staff?: Staff;
   booking?: Booking | null;
   slots?: Slot[];
+  // Present only on the createAppointment response — true when every
+  // stylist was already committed and this booking was queued onto the
+  // waitlist (status will be 'WAITLISTED') instead of confirmed outright.
+  waitlisted?: boolean;
+  bookingReference?: number;
 }
 
 export interface Slot {
