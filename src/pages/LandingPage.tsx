@@ -93,7 +93,7 @@ export function LandingPage() {
       </section>
 
       <footer className="landing-footer">
-        <p>Locs Allure — Madina Estates, Accra, Ghana</p>
+        <p>Locs Allure — Madina Estates, Accra, Ghana © {new Date().getFullYear()}</p>
       </footer>
     </div>
   );

@@ -1,7 +1,6 @@
  import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
-import { AxiosError } from 'axios';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { useAuthContext } from '../../hooks/useAuthcontext';
 import { useCreateAppointment } from '../../hooks/useAppointments';
@@ -15,7 +14,7 @@ import { StaffPicker } from '../../components/booking/StaffPicker';
 import { SlotCalender } from '../../components/booking/SlotCalender';
 import { ConsentForm } from '../../components/forms/ConsentForm';
 import { toast } from '../../store/uiStore';
-import { getErrorMessage } from '../../utils/apiClient';
+import { getErrorMessage, getErrorCode } from '../../utils/apiClient';
 import type { PaymentMethod } from '../../types/models';
 
 function formatGHS(value: number): string {
@@ -179,6 +178,7 @@ export function BookingPage() {
 
       if (quote.amountDue <= 0) {
         reset();
+        toast.success('Booking successful! Check your email or SMS for confirmation.');
         navigate(`/booking/confirmation/${booking.id}`);
         return;
       }
@@ -199,22 +199,34 @@ export function BookingPage() {
       } else {
         // No payment URL returned — go straight to confirmation and let
         // it poll the real payment status from the backend.
+        toast.success('Booking successful! Check your email or SMS for confirmation.');
         navigate(`/booking/confirmation/${booking.id}`);
       }
     } catch (err) {
-      // 409 from POST /appointments specifically means someone else took
-      // this exact staff/time between the client loading the calendar and
-      // hitting "confirm" — the server-side conflict check caught it. A
-      // generic error toast here would be misleading (it reads like
-      // "something broke"), and re-submitting with the same slot will
-      // just fail again. Send them back to the calendar with the stale
-      // slot cleared and force an immediate refetch of availability.
-      const isSlotConflict = err instanceof AxiosError && err.response?.status === 409;
-      if (isSlotConflict) {
+      // Two distinct 409s can come back from POST /appointments and both
+      // need very different messaging — conflating them (as "someone
+      // booked that slot") is confusing and, for ACCOUNT_EXISTS, flat out
+      // wrong. The backend tags each with a `code` so we don't have to
+      // guess from status alone.
+      const code = getErrorCode(err);
+
+      if (code === 'SLOT_CONFLICT') {
+        // Someone else took this exact staff/time between the client
+        // loading the calendar and hitting "confirm". Re-submitting with
+        // the same slot will just fail again — send them back to the
+        // calendar with the stale slot cleared and force a refetch.
         toast.error('Sorry — that time was just booked by someone else. Please pick another.');
         useBookingFlowStore.getState().setSlot(null);
         queryClient.invalidateQueries({ queryKey: slotKeys.all });
         useBookingFlowStore.getState().setStep(2);
+      } else if (code === 'ACCOUNT_EXISTS') {
+        // Almost always means: this exact booking already went through
+        // (often on an earlier submit) and they're retrying with the same
+        // guest email. Internal detail ("an account already exists") isn't
+        // useful to a client mid-booking — tell them plainly what to do.
+        toast.error(
+          'Looks like you already have a booking with these details — check your email or SMS for confirmation. To book again, please sign in.'
+        );
       } else {
         toast.error(getErrorMessage(err));
       }

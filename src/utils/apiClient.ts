@@ -50,4 +50,16 @@ export function getErrorMessage(error: unknown): string {
   return "An unexpected error occurred";
 }
 
+// Machine-readable error code from the backend (e.g. 'SLOT_CONFLICT',
+// 'ACCOUNT_EXISTS'), when present. Lets the UI branch on the *kind* of
+// error instead of guessing from HTTP status alone — several distinct
+// error cases can legitimately share the same status code (409).
+export function getErrorCode(error: unknown): string | undefined {
+  if (error instanceof AxiosError) {
+    const data = error.response?.data as Record<string, unknown> | undefined;
+    if (typeof data?.code === "string") return data.code;
+  }
+  return undefined;
+}
+
 export default apiClient;

@@ -99,7 +99,13 @@ export function ConfirmationPage() {
   }
 
   // ── Payment still pending / webhook lag ─────────────────────────────
-  if (isPending || !booking.payment) {
+  // NOTE: booking.payment is legitimately null for pay-at-salon bookings
+  // (no deposit required — see paymentController.initPayment, which never
+  // creates a Payment row when amountDue <= 0). That is a normal confirmed
+  // state, not a pending one, so it must NOT fall into this branch or the
+  // page gets stuck on "Confirming your payment…" forever with nothing to
+  // poll for and no way out.
+  if (isPending) {
     return (
       <div className="confirmation-page">
         <div className="confirmation-card">
@@ -166,6 +172,11 @@ export function ConfirmationPage() {
   }
 
   // ── Confirmed ────────────────────────────────────────────────────────
+  // booking.payment is null here for pay-at-salon bookings (no deposit
+  // required — see the note above) — that's a normal confirmed state, not
+  // a missing one, so copy and the amount row both need to reflect
+  // "nothing collected yet" rather than assume a payment happened.
+  const payment = booking.payment;
 
   return (
     <div className="confirmation-page">
@@ -173,8 +184,9 @@ export function ConfirmationPage() {
         <CheckCircle2 size={40} className="confirmation-icon confirmation-icon--success" />
         <h1 className="confirmation-title">Booking confirmed!</h1>
         <p className="confirmation-sub">
-          Your appointment at Locs Allure has been booked and paid for.
-          We'll send you a reminder before your appointment.
+          {payment
+            ? "Your appointment at Locs Allure has been booked and paid for. We'll send you a reminder before your appointment."
+            : "Your appointment at Locs Allure is booked. The balance is paid at the salon — we'll send you a reminder before your appointment."}
         </p>
 
         <div className="confirmation-ref">
@@ -203,8 +215,8 @@ export function ConfirmationPage() {
             </span>
           </div>
           <div className="confirmation-details__row confirmation-details__row--total">
-            <span>Amount paid</span>
-            <span>{formatGHS(booking.payment.amount)}</span>
+            <span>{payment ? 'Amount paid' : 'Amount due at salon'}</span>
+            <span>{payment ? formatGHS(payment.amount) : 'Pay at appointment'}</span>
           </div>
         </div>
 

@@ -1,13 +1,5 @@
- /* Fonts are now loaded via <link> in index.html (with preconnect) instead
-   of @import here — @import is render-blocking and adds a serial
-   round-trip (fetch CSS → discover @import → fetch font CSS → fetch font
-   files) before text renders in its final font on every page load. */
 
-/* ── Base reset ──────────────────────────────────────────────
-   Nothing in this codebase reset the browser defaults, so the
-   default 8px <body> margin and content-box sizing were showing
-   up as unexplained whitespace/overflow around full-viewport
-   layouts (the admin sidebar, the auth page split). */
+/* ── Base reset ──────────────────────────────────────────────*/
 *, *::before, *::after {
   box-sizing: border-box;
 }
@@ -345,6 +337,10 @@ img, svg {
   color: var(--gold-light);
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
+  object-fit: cover;
+}
+.navbar-logo-mark--fallback {
+  /* Matches the <img>'s box so the onError swap is visually seamless */
 }
 .navbar-logo-name {
   font-family: var(--font-display);
@@ -391,8 +387,18 @@ img, svg {
 .navbar-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-3);
+  gap: var(--space-4);
   margin-left: auto;
+}
+/* Groups the signed-in identity + sign-out control as one visual unit —
+   close together (small internal gap), but set apart from the nav links
+   by a left divider rather than floating loose at the far edge. */
+.navbar-session {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-left: var(--space-4);
+  border-left: 1px solid var(--border);
 }
 .navbar-user-chip {
   font-size: var(--text-sm);

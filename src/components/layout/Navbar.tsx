@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
-import { Menu, X, Scissors } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUnclaimedAppointments } from '../../hooks/useAppointments';
 import { Button } from '../ui/Button';
@@ -89,9 +89,22 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
           to={variant === 'admin' ? '/dashboard' : variant === 'staff' ? '/staff/dashboard' : '/'}
           className="navbar-logo"
         >
-          <div className="navbar-logo-mark">
-            <Scissors size={17} strokeWidth={2} />
-          </div>
+          <img
+            src="/logo.png"
+            alt="Locs Allure"
+            className="navbar-logo-mark"
+            onError={(e) => {
+              // Fallback if logo.png is ever missing from /public — keeps the
+              // navbar usable instead of showing a broken-image icon.
+              e.currentTarget.replaceWith(
+                Object.assign(document.createElement('div'), {
+                  className: 'navbar-logo-mark navbar-logo-mark--fallback',
+                  innerHTML:
+                    '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="20" y1="4" x2="8.12" y2="15.88"/><line x1="14.47" y1="14.48" x2="20" y2="20"/><line x1="8.12" y1="8.12" x2="12" y2="12"/></svg>',
+                })
+              );
+            }}
+          />
           <span className="navbar-logo-name">Locs Allure</span>
         </Link>
 
@@ -114,10 +127,10 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
 
         <div className="navbar-actions">
           {isAuthenticated ? (
-            <>
+            <div className="navbar-session">
               <span className="navbar-user-chip">{user?.name?.split(' ')[0]}</span>
               <Button variant="ghost" size="sm" onClick={logout}>Sign Out</Button>
-            </>
+            </div>
           ) : (
             <>
               <Button variant="ghost" size="sm" onClick={() => navigate('/login')}>Sign In</Button>
