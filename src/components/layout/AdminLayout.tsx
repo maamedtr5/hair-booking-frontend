@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications, useUnreadCount } from '../../hooks/useNotifications';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 
 const NAV = [
@@ -130,6 +131,7 @@ export function AdminLayout() {
       {/* Main content column */}
         <div className="admin-main">
           <header className="admin-header">
+            <ThemeToggle />
             <div className="notif-wrap" ref={notifRef}>
               <button
                 className="notif-btn"

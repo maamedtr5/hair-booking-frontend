@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 interface UsePaginationResult<T> {
   page: number;
@@ -32,18 +32,18 @@ export function usePagination<T>(items: T[], initialPageSize = 10): UsePaginatio
 
   // Land back on a valid page if the list shrank (search/filter narrowed
   // it, an item was deleted, etc.) — otherwise you can end up "stuck" on
-  // page 4 of an empty result set.
-  useEffect(() => {
-    if (page > pageCount) setPage(pageCount);
-  }, [page, pageCount]);
+  // page 4 of an empty result set. Clamped directly here (derived from
+  // existing state during render) rather than synced back via a
+  // setState-in-effect, which would trigger an extra cascading render.
+  const clampedPage = Math.min(page, pageCount);
 
   const pageItems = useMemo(() => {
-    const start = (Math.min(page, pageCount) - 1) * pageSize;
+    const start = (clampedPage - 1) * pageSize;
     return items.slice(start, start + pageSize);
-  }, [items, page, pageCount, pageSize]);
+  }, [items, clampedPage, pageSize]);
 
   return {
-    page: Math.min(page, pageCount),
+    page: clampedPage,
     setPage,
     pageCount,
     pageItems,

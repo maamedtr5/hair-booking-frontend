@@ -237,6 +237,19 @@ export interface PaymentPolicy {
   depositAmount: number;
 }
 
+export interface SalonLocation {
+  address: string;
+  latitude: number | null;
+  longitude: number | null;
+  gettingHereNotes: string;
+}
+
+export interface BusinessInfo {
+  name: string;
+  phone: string;
+  email: string;
+}
+
 export interface Waitlist {
   id: number;
   clientId: number;

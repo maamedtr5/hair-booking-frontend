@@ -4,6 +4,7 @@ import { Menu, X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useUnclaimedAppointments } from '../../hooks/useAppointments';
 import { Button } from '../ui/Button';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 
 
@@ -126,6 +127,7 @@ export function Navbar({ variant = 'public' }: NavbarProps) {
         </nav>
 
         <div className="navbar-actions">
+          <ThemeToggle />
           {isAuthenticated ? (
             <div className="navbar-session">
               <span className="navbar-user-chip">{user?.name?.split(' ')[0]}</span>

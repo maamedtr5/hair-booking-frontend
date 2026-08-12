@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Scissors, Clock, ShieldCheck } from 'lucide-react';
 import { Navbar } from '../components/layout/Navbar';
+import { GettingHere } from '../components/GettingHere';
 import { useServices } from '../hooks/useServices';
 import { Spinner } from '../components/ui/Spinner';
 
@@ -91,6 +92,8 @@ export function LandingPage() {
           </div>
         )}
       </section>
+
+      <GettingHere />
 
       <footer className="landing-footer">
         <p>Locs Allure — Madina Estates, Accra, Ghana © {new Date().getFullYear()}</p>

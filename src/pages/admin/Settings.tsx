@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+ import React, { useState } from 'react';
 import { Save, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -7,8 +7,13 @@ import { Input } from '../../components/ui/Input';
 import { PageSpinner } from '../../components/ui/Spinner';
 
 import { toast } from '../../store/uiStore';
-import { useBusinessHours, useUpdateBusinessHours, usePaymentPolicy, useUpdatePaymentPolicy } from '../../hooks/useSettings';
-import type { BusinessHoursConfig, DayHours, PaymentPolicy } from '../../types/models';
+import {
+  useBusinessHours, useUpdateBusinessHours,
+  usePaymentPolicy, useUpdatePaymentPolicy,
+  useSalonLocation, useUpdateSalonLocation,
+  useBusinessInfo, useUpdateBusinessInfo,
+} from '../../hooks/useSettings';
+import type { BusinessHoursConfig, DayHours, PaymentPolicy, SalonLocation, BusinessInfo } from '../../types/models';
 
 type SettingsSectionProps = { title: string; children: React.ReactNode };
 
@@ -171,6 +176,159 @@ function PaymentPolicySection() {
   );
 }
 
+function SalonLocationSection() {
+  const { data, isLoading } = useSalonLocation();
+  const updateMutation = useUpdateSalonLocation();
+  const [draft, setDraft] = useState<SalonLocation | null>(null);
+
+  const working = draft ?? data ?? null;
+
+  async function handleSave() {
+    if (!working) return;
+    if (!working.address.trim()) {
+      toast.error('Address is required — it powers the map and directions on the public site');
+      return;
+    }
+    try {
+      await updateMutation.mutateAsync(working);
+      toast.success('Location updated');
+    } catch {
+      toast.error('Could not save location');
+    }
+  }
+
+  if (isLoading || !working) return <PageSpinner message="Loading…" />;
+
+  const hasCoords = working.latitude !== null && working.longitude !== null;
+
+  return (
+    <div className="form-fields">
+      <p className="settings-help-text">
+        Powers the "Getting Here" section on the public site — the map, the directions button, and your own notes
+        on how clients should get here (which trotro routes to take, which to avoid, landmarks to watch for).
+      </p>
+
+      <Input
+        label="Address"
+        placeholder="e.g. Madina Estates, near the Magistrate Court, Accra"
+        value={working.address}
+        onChange={(e) => setDraft({ ...working, address: e.target.value })}
+      />
+
+      <div className="form-row">
+        <Input
+          label="Latitude (optional)"
+          type="number"
+          step="any"
+          placeholder="e.g. 5.6837"
+          value={working.latitude ?? ''}
+          onChange={(e) => {
+            const v = e.target.value === '' ? null : Number(e.target.value);
+            setDraft({ ...working, latitude: v, longitude: v === null ? null : working.longitude });
+          }}
+        />
+        <Input
+          label="Longitude (optional)"
+          type="number"
+          step="any"
+          placeholder="e.g. -0.1657"
+          value={working.longitude ?? ''}
+          onChange={(e) => {
+            const v = e.target.value === '' ? null : Number(e.target.value);
+            setDraft({ ...working, longitude: v, latitude: v === null ? null : working.latitude });
+          }}
+        />
+      </div>
+      <p className="settings-help-text">
+        {hasCoords
+          ? 'Coordinates set — the map and directions will pin this exact spot.'
+          : "Optional, but recommended: without coordinates, the map falls back to searching the address text above, which is less precise. Find yours by right-clicking your location in Google Maps and copying the two numbers it shows."}
+      </p>
+
+      <div>
+        <label className="form-label" style={{ display: 'block', marginBottom: 6 }}>
+          Getting-here notes (optional)
+        </label>
+        <textarea
+          className="form-textarea"
+          rows={5}
+          placeholder={"e.g.\nFrom Circle: board a Madina trotro, get off at Madina Zongo Junction, we're a 5 min walk from there.\nFrom the Airport area: a taxi or Bolt is more reliable than trotro for this route."}
+          value={working.gettingHereNotes}
+          onChange={(e) => setDraft({ ...working, gettingHereNotes: e.target.value })}
+        />
+        <p className="settings-help-text">
+          One tip per line. This is the one place trotro-specific guidance should come from — write what you'd
+          actually tell a client, including routes you'd steer them away from.
+        </p>
+      </div>
+
+      <Button icon={<Save size={14} />} onClick={handleSave} loading={updateMutation.isPending}>
+        Save Location
+      </Button>
+    </div>
+  );
+}
+
+function BusinessInfoSection() {
+  const { data, isLoading } = useBusinessInfo();
+  const updateMutation = useUpdateBusinessInfo();
+  const [draft, setDraft] = useState<BusinessInfo | null>(null);
+
+  const working = draft ?? data ?? null;
+
+  async function handleSave() {
+    if (!working) return;
+    if (!working.name.trim()) {
+      toast.error('Business name is required');
+      return;
+    }
+    if (working.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(working.email)) {
+      toast.error('Enter a valid email address');
+      return;
+    }
+    try {
+      await updateMutation.mutateAsync(working);
+      toast.success('Business info updated');
+    } catch {
+      toast.error('Could not save business info');
+    }
+  }
+
+  if (isLoading || !working) return <PageSpinner message="Loading…" />;
+
+  return (
+    <div className="form-fields">
+      <p className="settings-help-text">
+        Business name is used as the sender name on emails clients receive from Locs Allure.
+      </p>
+      <div className="form-row">
+        <Input
+          label="Business name"
+          value={working.name}
+          onChange={(e) => setDraft({ ...working, name: e.target.value })}
+        />
+        <Input
+          label="Phone"
+          type="tel"
+          placeholder="e.g. +233 20 869 0943"
+          value={working.phone}
+          onChange={(e) => setDraft({ ...working, phone: e.target.value })}
+        />
+      </div>
+      <Input
+        label="Email"
+        type="email"
+        placeholder="e.g. hello@locsallure.com"
+        value={working.email}
+        onChange={(e) => setDraft({ ...working, email: e.target.value })}
+      />
+      <Button icon={<Save size={14} />} onClick={handleSave} loading={updateMutation.isPending}>
+        Save Changes
+      </Button>
+    </div>
+  );
+}
+
 export function Settings() {
   const navigate = useNavigate();
 
@@ -189,6 +347,11 @@ export function Settings() {
       {/* Payment Policy */}
       <SettingsSection title="Payment Policy">
         <PaymentPolicySection />
+      </SettingsSection>
+
+      {/* Location & Directions — powers the public "Getting Here" section */}
+      <SettingsSection title="Location & Directions">
+        <SalonLocationSection />
       </SettingsSection>
 
       {/* Promo Codes — managed on its own dedicated page now, rather than
@@ -213,17 +376,12 @@ export function Settings() {
         ))}
       </SettingsSection>
 
-      {/* Business Information */}
+      {/* Business Information — name is used as the outgoing-email sender
+          name (see emailService.js). Phone/email aren't consumed
+          anywhere else yet, but are now real, saved settings rather than
+          a static mock. */}
       <SettingsSection title="Business Information">
-        <div className="form-fields">
-          <div className="form-row">
-            <Input label="Business name" defaultValue="Locs Allure" />
-            <Input label="Phone" type="tel" defaultValue="+233 20 869 0943" />
-          </div>
-          <Input label="Address" defaultValue="Madina Estates, Accra, Ghana" />
-          <Input label="Email" type="email" defaultValue="hello@locsallure.com" />
-          <Button icon={<Save size={14} />}>Save Changes</Button>
-        </div>
+        <BusinessInfoSection />
       </SettingsSection>
     </div>
   );

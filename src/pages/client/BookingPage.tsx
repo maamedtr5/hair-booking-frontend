@@ -12,6 +12,7 @@ import { slotKeys } from '../../hooks/useSlots';
 import { ServiceSelector } from '../../components/booking/ServiceSelector';
 import { StaffPicker } from '../../components/booking/StaffPicker';
 import { SlotCalender } from '../../components/booking/SlotCalender';
+import { CoilDivider } from '../../components/booking/CoilDivider';
 import { ConsentForm } from '../../components/forms/ConsentForm';
 import { toast } from '../../store/uiStore';
 import { getErrorMessage, getErrorCode } from '../../utils/apiClient';
@@ -169,6 +170,20 @@ export function BookingPage() {
         }
       }
 
+      // Every stylist was booked for this time, so the appointment landed
+      // on the waitlist instead of a real slot — there is nothing to
+      // charge for yet (see resolveBookingAmount in paymentController.js,
+      // which now rejects amountDue for a WAITLISTED appointment as a
+      // server-side backstop to this check). Skip the quote/payment step
+      // entirely; the client pays once promoted, which is when a slot
+      // — and therefore a real amount owed — actually exists.
+      if (appointment.waitlisted) {
+        reset();
+        toast.success('You\u2019ve been added to the waitlist. We\u2019ll notify you the moment a slot opens up.');
+        navigate(`/booking/confirmation/${booking.id}`);
+        return;
+      }
+
       // Ask the server what (if anything) is actually due right now —
       // under the default pay-after policy this is 0 and no payment step
       // runs at all; a deposit policy returns the deposit-only amount.
@@ -253,7 +268,7 @@ export function BookingPage() {
               <span className="booking-step__num">{step > s.num ? '✓' : s.num}</span>
               <span className="booking-step__label">{s.label}</span>
             </div>
-            {i < STEPS.length - 1 && <span className="booking-step__divider" />}
+            {i < STEPS.length - 1 && <CoilDivider done={step > s.num} />}
           </div>
         ))}
       </div>

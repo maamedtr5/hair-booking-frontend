@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useAvailableSlots } from '../../hooks/useSlots';
+import { useAvailableSlots, useMonthAvailability } from '../../hooks/useSlots';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import type { Slot } from '../../types';
@@ -23,6 +23,10 @@ function isSameDay(a: Date, b: Date): boolean {
     a.getMonth()    === b.getMonth()    &&
     a.getDate()     === b.getDate()
   );
+}
+
+function toDateStr(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
 }
 
 function formatTime(iso: string): string {
@@ -64,9 +68,10 @@ interface TimeSlotsProps {
   selectedSlot: Slot | null;
   onSelect: (slot: Slot) => void;
   isLoading: boolean;
+  dayStatus?: 'closed' | 'full' | 'available';
 }
 
-function TimeSlots({ slots, selectedSlot, onSelect, isLoading }: TimeSlotsProps) {
+function TimeSlots({ slots, selectedSlot, onSelect, isLoading, dayStatus }: TimeSlotsProps) {
   if (isLoading) {
     return (
       <div className="slot-cal__time-loading">
@@ -74,8 +79,18 @@ function TimeSlots({ slots, selectedSlot, onSelect, isLoading }: TimeSlotsProps)
       </div>
     );
   }
+
+  // We already know from the month summary *why* nothing's available
+  // here — no need to wait for the fetch to say something generic.
+  if (dayStatus === 'closed') {
+    return <p className="slot-cal__no-slots">We're closed that day — please check another date.</p>;
+  }
   if (slots.length === 0) {
-    return <p className="slot-cal__no-slots">No available times on this date.</p>;
+    return (
+      <p className="slot-cal__no-slots">
+        Every stylist is already booked for that day — please check another date.
+      </p>
+    );
   }
 
   const grouped: Record<string, Slot[]> = { Morning: [], Afternoon: [], Evening: [] };
@@ -118,13 +133,25 @@ export function SlotCalender() {
   const [viewMonth, setViewMonth] = useState(today.getMonth());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
-  const { selectedStaff, selectedSlot, setSlot } = useBookingFlowStore();
+  const { selectedStaff, selectedService, selectedSlot, setSlot } = useBookingFlowStore();
+  const duration = selectedService?.duration;
 
   // Two positional args: staffId (number|null), date string (YYYY-MM-DD | null)
-  const dateStr = selectedDate ? selectedDate.toISOString().split('T')[0] : null;
+  const dateStr = selectedDate ? toDateStr(selectedDate) : null;
   const { data: slots, isLoading } = useAvailableSlots(
     selectedStaff?.id ?? null,
     dateStr,
+    duration,
+  );
+
+  // Closed/fully-booked days for the whole visible month, so the grid
+  // can fade them before the client clicks into one — rather than only
+  // finding out day by day after the fact.
+  const { data: monthAvailability } = useMonthAvailability(
+    viewYear,
+    viewMonth + 1, // JS months are 0-indexed; the API takes 1-12
+    selectedStaff?.id ?? null,
+    duration,
   );
 
   // Slot.isBooked means taken — available slots are !isBooked
@@ -148,6 +175,7 @@ export function SlotCalender() {
   }
 
   const canGoPrev = !(viewYear === today.getFullYear() && viewMonth === today.getMonth());
+  const selectedDayStatus = dateStr ? monthAvailability?.[dateStr] : undefined;
 
   return (
     <div className="slot-cal">
@@ -163,6 +191,14 @@ export function SlotCalender() {
             const isPast     = date < today;
             const isToday    = isSameDay(date, today);
             const isSelected = selectedDate !== null && isSameDay(date, selectedDate);
+            const status = monthAvailability?.[toDateStr(date)];
+            const isClosed = status === 'closed';
+            const isFull   = status === 'full';
+            const label = isClosed
+              ? ` — closed`
+              : isFull
+                ? ` — fully booked`
+                : '';
             return (
               <button
                 key={date.toISOString()}
@@ -170,13 +206,27 @@ export function SlotCalender() {
                 disabled={isPast}
                 onClick={() => setSelectedDate(date)}
                 aria-pressed={isSelected}
-                aria-label={date.toLocaleDateString('en-GH', { weekday: 'long', month: 'long', day: 'numeric' })}
-                className={['slot-cal__day', isPast ? 'slot-cal__day--past' : '', isToday ? 'slot-cal__day--today' : '', isSelected ? 'slot-cal__day--selected' : ''].filter(Boolean).join(' ')}
+                aria-label={`${date.toLocaleDateString('en-GH', { weekday: 'long', month: 'long', day: 'numeric' })}${label}`}
+                className={[
+                  'slot-cal__day',
+                  isPast ? 'slot-cal__day--past' : '',
+                  isToday ? 'slot-cal__day--today' : '',
+                  isSelected ? 'slot-cal__day--selected' : '',
+                  !isPast && isClosed ? 'slot-cal__day--closed' : '',
+                  !isPast && isFull ? 'slot-cal__day--full' : '',
+                ].filter(Boolean).join(' ')}
               >
                 {date.getDate()}
               </button>
             );
           })}
+        </div>
+
+        <div className="slot-cal__day-status">
+          <span className="slot-cal__day-status__dot slot-cal__day-status__dot--closed" aria-hidden="true" />
+          <span>Closed</span>
+          <span className="slot-cal__day-status__dot slot-cal__day-status__dot--full" aria-hidden="true" />
+          <span>Fully booked</span>
         </div>
       </div>
 
@@ -186,7 +236,13 @@ export function SlotCalender() {
             <p className="slot-cal__date-heading">
               {selectedDate.toLocaleDateString('en-GH', { weekday: 'long', month: 'long', day: 'numeric' })}
             </p>
-            <TimeSlots slots={availableSlots} selectedSlot={selectedSlot} onSelect={setSlot} isLoading={isLoading} />
+            <TimeSlots
+              slots={availableSlots}
+              selectedSlot={selectedSlot}
+              onSelect={setSlot}
+              isLoading={isLoading}
+              dayStatus={selectedDayStatus}
+            />
           </>
         ) : (
           <div className="slot-cal__time-empty">

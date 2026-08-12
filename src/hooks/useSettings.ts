@@ -1,7 +1,7 @@
 // hooks/useSettings.ts
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {  settingsApi } from '../api/settings';
-import type { BusinessHoursConfig, PaymentPolicy } from '../types/models';
+import type { BusinessHoursConfig, PaymentPolicy, SalonLocation, BusinessInfo } from '../types/models';
 
 const KEY = 'settings';
 
@@ -51,5 +51,31 @@ export function useUpdatePaymentPolicy() {
   return useMutation({
     mutationFn: (policy: PaymentPolicy) => settingsApi.updatePaymentPolicy(policy),
     onSuccess: () => qc.invalidateQueries({ queryKey: [KEY, 'paymentPolicy'] }),
+  });
+}
+
+// Salon location — address, optional map coordinates, getting-here notes.
+export function useSalonLocation() {
+  return useQuery({ queryKey: [KEY, 'salonLocation'], queryFn: settingsApi.getSalonLocation });
+}
+
+export function useUpdateSalonLocation() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (location: SalonLocation) => settingsApi.updateSalonLocation(location),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY, 'salonLocation'] }),
+  });
+}
+
+// Business info — name, phone, email.
+export function useBusinessInfo() {
+  return useQuery({ queryKey: [KEY, 'businessInfo'], queryFn: settingsApi.getBusinessInfo });
+}
+
+export function useUpdateBusinessInfo() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (info: BusinessInfo) => settingsApi.updateBusinessInfo(info),
+    onSuccess: () => qc.invalidateQueries({ queryKey: [KEY, 'businessInfo'] }),
   });
 }
