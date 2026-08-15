@@ -132,6 +132,15 @@ export function AdminLayout() {
         <div className="admin-main">
           <header className="admin-header">
             <ThemeToggle />
+            <button
+              className="admin-header-logout"
+              onClick={logout}
+              title="Sign out"
+              aria-label="Sign out"
+            >
+              <LogOut size={16} strokeWidth={1.8} />
+              <span>Sign out</span>
+            </button>
             <div className="notif-wrap" ref={notifRef}>
               <button
                 className="notif-btn"

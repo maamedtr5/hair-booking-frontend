@@ -79,13 +79,24 @@ export function ConsentForm({ clientId, onComplete }: ConsentFormProps) {
   async function handleSubmit() {
     setSubmitted(true);
     if (!allRequired) return;
-       setConsentData(checked);
+    setConsentData(checked);
 
     // Guest checkout: no Client record exists yet, so there's nothing to
     // attach consent to. It's stored in the booking flow store above and
     // BookingPage submits it for real once the guest's client is created.
     if (!clientId) {
-      onComplete?.(checked);
+      // Deferred to a macrotask: this branch runs synchronously inside
+      // the button's onClick, which is normally a perfectly safe place
+      // to update a parent (BookingPage advances its step via
+      // onComplete). But React was warning "Cannot update a component
+      // (BookingPage) while rendering a different component
+      // (ConsentForm)" — the mutation below causes `consentFormMutation`
+      // re-renders that can overlap with this call depending on timing,
+      // and once one branch needs deferring for that reason, keeping
+      // both branches on the same footing (rather than one deferred, one
+      // not) avoids the same warning resurfacing here later if this
+      // branch's timing ever changes.
+      setTimeout(() => onComplete?.(checked), 0);
       return;
     }
     try {
@@ -95,7 +106,16 @@ export function ConsentForm({ clientId, onComplete }: ConsentFormProps) {
         signature: JSON.stringify(checked), // store all consents as JSON string
       });
 
-      onComplete?.(checked);
+      // The await above means this line resumes as a promise
+      // continuation, not inside the original click handler's call
+      // stack. If that resumption happens to land while React is mid
+      // render/commit elsewhere, calling onComplete synchronously here
+      // updates BookingPage's step state "during" that unrelated render
+      // — which is exactly the warning this was producing. Deferring to
+      // a macrotask (setTimeout 0) guarantees this runs after React has
+      // fully finished whatever it was doing, closing the timing gap
+      // instead of just relying on it not lining up badly.
+      setTimeout(() => onComplete?.(checked), 0);
     } catch {
       // handle error gracefully
     }

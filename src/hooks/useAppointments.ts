@@ -86,11 +86,15 @@ export function useCreateAppointment() {
       return status === 409 && message.includes('being booked by someone else');
     },
     retryDelay: 300,
+    // No toast.success/toast.error here — BookingPage.tsx (the only
+    // caller) already shows contextual, situation-specific messaging
+    // (waitlisted vs. confirmed vs. slot-conflict vs. account-exists).
+    // Firing a second, generic toast from here stacked on top of that
+    // one, which is exactly why a real success could look like nothing
+    // happened — two toasts competing instead of one clear one.
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: appointmentKeys.all });
-      toast.success('Appointment created successfully');
     },
-    onError: (err) => toast.error(getErrorMessage(err)),
   });
 }
 

@@ -13,14 +13,14 @@ const ICONS: Record<ToastType['type'], React.ReactNode> = {
 };
 
 const COLORS: Record<ToastType['type'], string> = {
-  success: '#065F46',
+  success: '#8a6d1f',
   error:   '#991B1B',
   info:    '#1E40AF',
   warning: '#92400E',
 };
 
 const BG_COLORS: Record<ToastType['type'], string> = {
-  success: '#D1FAE5',
+  success: '#FBF0D9',
   error:   '#FEE2E2',
   info:    '#DBEAFE',
   warning: '#FEF3C7',
