@@ -22,11 +22,33 @@ export async function getSlot(id: number): Promise<Slot> {
 export async function getAvailableSlots(
   staffId: number | null,
   date: string, // YYYY-MM-DD
+  durationMinutes?: number,
 ): Promise<Slot[]> {
   const params: Record<string, string> = { date };
   if (staffId) params.staffId = String(staffId);
+  if (durationMinutes) params.duration = String(durationMinutes);
   const { data } = await apiClient.get<ApiResponse<Slot[]>>('/slots/available', { params });
   return data.data ?? [];
+}
+
+/** Per-day open/closed/full/available status, computed with the exact
+ * same logic as GET /slots/available, so the calendar's faded-day
+ * display can never drift out of sync with what booking a day actually
+ * shows. `month` is 1-12. */
+export async function getMonthAvailability(
+  year: number,
+  month: number,
+  staffId: number | null,
+  durationMinutes?: number,
+): Promise<Record<string, 'closed' | 'full' | 'available'>> {
+  const params: Record<string, string> = { year: String(year), month: String(month) };
+  if (staffId) params.staffId = String(staffId);
+  if (durationMinutes) params.duration = String(durationMinutes);
+  const { data } = await apiClient.get<ApiResponse<Record<string, 'closed' | 'full' | 'available'>>>(
+    '/slots/month-availability',
+    { params },
+  );
+  return data.data ?? {};
 }
 
 /** POST /slots */
