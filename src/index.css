@@ -20,6 +20,16 @@ body {
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Single source of truth for the page canvas colour. Individual pages
+     (landing, booking, etc.) may still paint their own background on
+     their top-level wrapper for layering/gradient effects, but every
+     page — including ones with no wrapper element at all, like
+     MyBookings.tsx — must be readable the moment <html data-theme> flips,
+     without relying on each page remembering to opt in. This is what
+     was missing: dark mode only "worked" on the couple of pages whose
+     wrapper happened to set background: var(--cream) itself. */
+  background: var(--cream);
+  color: var(--text-primary);
 }
 
 img, svg {
