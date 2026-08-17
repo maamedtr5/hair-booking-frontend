@@ -198,12 +198,30 @@ export function BookingPage() {
         return;
       }
 
-      const paymentRes = await initPayment.mutateAsync({
-        bookingId: booking.id,
-        method:    paymentMethod,
-        provider:  'PAYSTACK', // both MoMo and Card deposits route through Paystack
-        email:     payEmail!,
-      });
+      let paymentRes;
+      try {
+        paymentRes = await initPayment.mutateAsync({
+          bookingId: booking.id,
+          method:    paymentMethod,
+          provider:  'PAYSTACK', // both MoMo and Card deposits route through Paystack
+          email:     payEmail!,
+        });
+      } catch (paymentErr) {
+        // Rare race: the quote (moments ago) said a deposit was due, but
+        // by the time this actually ran the server disagreed — e.g. the
+        // payment policy changed, or the booking's status shifted
+        // in between. That's not a failure from the client's point of
+        // view: nothing is owed, so treat it exactly like a zero quote
+        // rather than surfacing a confusing "Bad Request" toast for what
+        // is, for the person booking, good news.
+        if (getErrorCode(paymentErr) === 'NO_PAYMENT_REQUIRED') {
+          reset();
+          toast.success('Booking successful! Check your email or SMS for confirmation.');
+          navigate(`/booking/confirmation/${booking.id}`);
+          return;
+        }
+        throw paymentErr;
+      }
 
       reset(); // clear booking flow state — the flow is complete
 

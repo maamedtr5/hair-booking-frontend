@@ -65,11 +65,19 @@ export function ConsentForm({ clientId, onComplete }: ConsentFormProps) {
   );
 
   function toggle(id: string) {
-    setChecked((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      setConsentData(next);
-      return next;
-    });
+    // setConsentData (a Zustand store write) must never live inside the
+    // functional updater passed to setChecked — React can invoke that
+    // updater during its render phase (Strict Mode double-invokes it
+    // deliberately), and a store write in there synchronously notifies
+    // BookingPage (which subscribes to consentData) *during* React's
+    // render of ConsentForm. That's the actual source of "Cannot update
+    // BookingPage while rendering ConsentForm" — computing `next` first
+    // and calling both setters as plain, separate statements in the
+    // event handler body (never nested inside an updater) keeps the
+    // store write a normal, safe event-driven update instead.
+    const next = { ...checked, [id]: !checked[id] };
+    setChecked(next);
+    setConsentData(next);
   }
 
   function toggleExpand(id: string) {
