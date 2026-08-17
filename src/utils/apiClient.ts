@@ -1,22 +1,37 @@
 // src/utils/apiClient.ts
 import axios, { AxiosError, type AxiosResponse } from "axios";
+import { getCsrfToken } from "./csrf";
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? "http://localhost:5001";
 
 const apiClient = axios.create({
   baseURL: BASE_URL,
   timeout: 15_000,
+  // The session JWT now lives in an httpOnly cookie (never readable by
+  // JS — that's the whole point), so it's carried automatically by the
+  // browser. withCredentials tells axios to actually send/receive
+  // cookies on cross-origin requests (the API and frontend are on
+  // different origins in dev, and likely in production too).
+  withCredentials: true,
   headers: {
     "Content-Type": "application/json",
   },
 });
 
+const SAFE_METHODS = new Set(["get", "head", "options"]);
+
 // ─── Request Interceptor ────────────────────────────────────────────────
+// No more Authorization header — there's no token in JS to attach, by
+// design. What every mutating request needs instead is the CSRF header
+// (see csrf.ts + the backend's csrfProtection middleware for why this is
+// still required even with SameSite=Lax cookies).
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (!SAFE_METHODS.has((config.method ?? "get").toLowerCase())) {
+      const csrfToken = getCsrfToken();
+      if (csrfToken) {
+        config.headers["X-CSRF-Token"] = csrfToken;
+      }
     }
     return config;
   },
@@ -29,8 +44,9 @@ apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
     if (error.response?.status === 401) {
-      localStorage.removeItem("auth_token");
-      localStorage.removeItem("auth_user");
+      // No token/user to clear from localStorage anymore — the cookie is
+      // cleared server-side on logout/expiry. This just tells the app
+      // "you're signed out now" so it can reset UI state.
       window.dispatchEvent(new CustomEvent("auth:unauthorized"));
     }
     return Promise.reject(error);

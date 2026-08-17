@@ -47,15 +47,13 @@ export const usersApi = {
 };
 
 /**
- * Fetch the currently authenticated user profile.
- * Returns an AuthUser (User + token).
+ * Fetch the currently authenticated user profile. With the session now
+ * carried by an httpOnly cookie, this call itself IS the source of truth
+ * for "is there a valid session" — a 401 here means logged out, full
+ * stop. No token to read or attach; the browser sends the cookie
+ * automatically (see apiClient's withCredentials).
  */
 export async function getMe(): Promise<AuthUser> {
   const { data } = await apiClient.get<User>('/users/me');
-
-  // Attach token from localStorage so AuthContext can persist it
-  const token = localStorage.getItem('auth_token');
-  if (!token) throw new Error('No auth token found in storage');
-
-  return { ...data, token };
+  return data as AuthUser;
 }

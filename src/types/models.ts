@@ -50,7 +50,6 @@ export interface User {
   staff?: Staff | null;
 }
 export interface AuthUser extends User {
-  token: string;
   admin?: Admin | null;
   client?: Client | null;
   staffId?: number| null;
