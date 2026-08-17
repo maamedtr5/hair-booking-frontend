@@ -14,6 +14,8 @@ import {
   UserCircle,
   Scissors,
   Tag,
+  Menu,
+  X,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications, useUnreadCount } from '../../hooks/useNotifications';
@@ -35,6 +37,7 @@ const NAV = [
 export function AdminLayout() {
   const { user, logout } = useAuth();
   const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -53,16 +56,32 @@ export function AdminLayout() {
   const unread = useUnreadCount(userId);
   const { data: notifications = [] } = useNotifications(userId);
 
-  const sidebarWidth = collapsed ? 64 : 220; // sidebar width in px
+  const sidebarWidth = collapsed ? 64 : 220; // sidebar width in px — desktop only, ignored below the mobile breakpoint
 
   return (
     <div
       className="admin-root admin-root--full"
       style={{ '--sw': `${sidebarWidth}px` } as React.CSSProperties}
     >
+      {/* Below the mobile breakpoint the sidebar becomes an off-canvas
+          drawer instead of a permanent grid column (see the
+          "ADMIN — MOBILE" media query in index.css) — this backdrop
+          closes it on outside tap, same pattern as the notif dropdown. */}
+      {mobileOpen && (
+        <div
+          className="admin-sidebar-backdrop"
+          onClick={() => setMobileOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Sidebar navigation */}
-      <aside className="admin-sidebar" aria-label="Admin navigation">
-        {/* Collapse/Expand toggle */}
+      <aside
+        className={`admin-sidebar${mobileOpen ? ' admin-sidebar--open' : ''}`}
+        aria-label="Admin navigation"
+      >
+        {/* Collapse/Expand toggle — desktop only; hidden on mobile via CSS
+            since the drawer's own close button (below) replaces it there. */}
         <button
           className="sidebar-toggle"
           onClick={() => setCollapsed((c) => !c)}
@@ -75,6 +94,13 @@ export function AdminLayout() {
         <div className={`sidebar-brand${collapsed ? ' collapsed-link' : ''}`}>
           <span className="sidebar-brand__mark">LA</span>
           {!collapsed && <span className="sidebar-brand__name">Locs Allure</span>}
+          <button
+            className="sidebar-mobile-close"
+            onClick={() => setMobileOpen(false)}
+            aria-label="Close menu"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         {/* Navigation Links */}
@@ -91,6 +117,7 @@ export function AdminLayout() {
                 key={to}
                 to={to}
                 end={end}
+                onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
                   `sidebar-nav-link${isActive ? ' active' : ''}${
                     collapsed ? ' collapsed-link' : ''
@@ -131,6 +158,13 @@ export function AdminLayout() {
       {/* Main content column */}
         <div className="admin-main">
           <header className="admin-header">
+            <button
+              className="admin-header-hamburger"
+              onClick={() => setMobileOpen(true)}
+              aria-label="Open menu"
+            >
+              <Menu size={20} strokeWidth={1.8} />
+            </button>
             <ThemeToggle />
             <button
               className="admin-header-logout"

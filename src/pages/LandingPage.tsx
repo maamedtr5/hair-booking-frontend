@@ -25,7 +25,7 @@ export function LandingPage() {
         <div className="landing-hero__content">
           <span className="landing-hero__eyebrow">Madina Estates, Accra</span>
           <h1 className="landing-hero__title">
-            Beautiful locs, braids &amp; natural hair — crafted with care
+            Beautiful locs, braids &amp; natural hair. Crafted with care
           </h1>
           <p className="landing-hero__sub">
             Book your appointment online in minutes. Choose your stylist, your time,

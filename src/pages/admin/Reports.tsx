@@ -152,12 +152,13 @@ export function Reports() {
                     ))}
                   </div>
                   {/* Detailed table of revenue */}
-                  <table className="revenue-table" style={{ marginTop: 20 }}>
-                    <thead>
-                      <tr>
-                        <th>Date</th>
-                        <th>Bookings</th>
-                        <th>Revenue</th>
+                  <div className="revenue-table-wrap">
+                    <table className="revenue-table" style={{ marginTop: 20 }}>
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Bookings</th>
+                          <th>Revenue</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -171,7 +172,8 @@ export function Reports() {
                         </tr>
                       ))}
                     </tbody>
-                  </table>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}
