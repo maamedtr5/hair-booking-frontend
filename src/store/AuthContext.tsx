@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 import {
@@ -44,8 +45,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Mirrors `user` for use inside `logout`, which needs to stay a stable
+  // callback (it's registered as a window event listener) but also needs
+  // to know, at call time, whether there's actually a session worth
+  // revoking. Reading `user` directly would mean either putting it in
+  // logout's deps (re-subscribing the listener on every login/logout) or
+  // capturing a stale closure.
+  const userRef = useRef<AuthUser | null>(user);
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
   const logout = useCallback(() => {
-    logoutRequest();
+    // Only hit the server if we actually think there's a session to
+    // revoke. Calling logoutRequest() unconditionally — including when
+    // we're already logged out — was harmless on its own, but combined
+    // with the auth:unauthorized listener below it created a loop: no
+    // session -> /auth/logout 401s -> event fires again -> logout() runs
+    // again -> another /auth/logout call -> ad infinitum.
+    if (userRef.current) {
+      logoutRequest();
+    }
     clearCachedUser();
     setUser(null);
   }, []);

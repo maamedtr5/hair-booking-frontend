@@ -1,17 +1,15 @@
 // src/main.tsx
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy } from "react";
 import ReactDOM from "react-dom/client";
 import {
   RouterProvider,
   createBrowserRouter,
   Navigate,
   Outlet,
-  useNavigate,
 } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "./store/queryClient";
 import { AuthProvider } from "./store/AuthContext";
-import { useAuthContext } from "./hooks/useAuthcontext";
 import { ProtectedRoute, RedirectStaffAndAdminFromBooking } from "./router/ProtectedRoute";
 import ErrorBoundary from "./components/ui/ErrorBoundary";
 import { ToastContainer } from "./components/ui/Toast";
@@ -91,18 +89,21 @@ function withSuspense(element: React.ReactNode) {
 }
 
 export function Root() {
-  const navigate = useNavigate();
-  const { logout } = useAuthContext();
-
-  useEffect(() => {
-    function handleUnauthorized() {
-      logout();
-      navigate("/login", { replace: true });
-    }
-    window.addEventListener("auth:unauthorized", handleUnauthorized);
-    return () => window.removeEventListener("auth:unauthorized", handleUnauthorized);
-  }, [navigate, logout]);
-
+  // AuthContext already listens for "auth:unauthorized" and clears the
+  // user (see store/AuthContext.tsx). This component used to *also*
+  // listen and call logout() + force-navigate to /login on every such
+  // event. That was doubly wrong:
+  //  1. It ran logout() a second time for the same event, doubling the
+  //     /auth/logout calls and — before /auth/logout was made idempotent
+  //     — turning a single 401 into a runaway loop of them.
+  //  2. It force-navigated to /login on *any* 401 anywhere in the app,
+  //     including the silent "am I logged in" check that runs on every
+  //     page load — so a guest landing on "/" got yanked straight to
+  //     /login instead of seeing the landing page.
+  // Redirecting away from a page that actually requires auth is already
+  // handled by ProtectedRoute, which re-renders and redirects on its own
+  // once `isAuthenticated` flips to false — no separate global listener
+  // needed here.
   return <Outlet />;
 }
 

@@ -20,14 +20,6 @@ body {
   font-family: 'DM Sans', system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  /* Single source of truth for the page canvas colour. Individual pages
-     (landing, booking, etc.) may still paint their own background on
-     their top-level wrapper for layering/gradient effects, but every
-     page — including ones with no wrapper element at all, like
-     MyBookings.tsx — must be readable the moment <html data-theme> flips,
-     without relying on each page remembering to opt in. This is what
-     was missing: dark mode only "worked" on the couple of pages whose
-     wrapper happened to set background: var(--cream) itself. */
   background: var(--cream);
   color: var(--text-primary);
 }
@@ -66,16 +58,7 @@ img, svg {
   --success-bg:    #ecfdf5;
   --success-text:  #059669;
 
-  /* --espresso is used ~9 times more often as *text* (headings, labels)
-     than as a background, so that's the role it keeps — it flips to a
-     light warm tone in dark mode. Solid dark surfaces (sidebar, avatar
-     chips, active-filter pills, the tooltip) use --espresso-surface
-     instead, which stays a dark brown in both modes.
-     --text-on-gold / --text-on-dark are fixed, intentionally NOT
-     redefined in the dark-mode block below: gold accents and the
-     permanently-dark hero panels look the same regardless of theme, so
-     the text sitting on them must stay fixed too, instead of flipping
-     with the page. */
+
   --espresso-surface: var(--espresso);
   --text-on-gold:      #2c1a0e;
   --text-on-dark:      #faf8f5;
@@ -142,26 +125,6 @@ img, svg {
   --navbar-height: 64px;
 }
 
-/* ============================================================
-   DARK MODE
-   Driven by a `data-theme="dark"` attribute on <html>, set by the
-   theme toggle (see useTheme.ts) and persisted to localStorage. A
-   small blocking script in index.html sets this before first paint —
-   using the person's saved choice if they have one, otherwise
-   falling back to their OS/browser preference — so there's no flash
-   of the wrong theme on load.
-
-   Every rule in this file reads color through a var(--...) token, so
-   redefining the tokens here is enough to re-skin the whole app;
-   nothing below this block should need touching.
-
-   A few tokens are *not* redefined here on purpose, because they're
-   fixed-contrast pairs rather than "page tone" — see the comments on
-   --espresso-surface / --text-on-gold / --text-on-dark / --espresso-
-   deepest up in :root for why (gold buttons and the always-dark hero
-   panels look the same either way, so the text sitting on them has to
-   stay fixed too, instead of flipping with the page around it).
-   ============================================================ */
 :root[data-theme="dark"] {
   --espresso:        #f0e6d8;
   --espresso-soft:   #6b5240;
@@ -193,15 +156,6 @@ img, svg {
   --shadow-md:  0 4px 16px rgba(0, 0, 0, 0.32);
   --shadow-lg:  0 12px 40px rgba(0, 0, 0, 0.4);
 }
-
-/* ============================================================
-   SHARED: raw .btn / .btn--* buttons
-   (Button.tsx self-styles its own single-dash classes like
-   .btn-primary — these double-dash BEM classes are what plain
-   <button className="btn btn--primary"> calls use elsewhere
-   in the app, e.g. BookingPage, StaffDashboard, Notification,
-   ClientProfile. Both conventions now resolve to the same look.)
-   ============================================================ */
 
 .btn {
   display: inline-flex;
@@ -263,10 +217,6 @@ img, svg {
 .btn--danger:hover:not(:disabled) { background: var(--color-danger); color: #fff; }
 
 
-/* ============================================================
-   SHARED: page-level header + section title utilities
-   (used by BookingPage, StaffDashboard, and others)
-   ============================================================ */
 
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-6); }
 .page-title { font-family: var(--font-display); font-size: var(--text-3xl); font-weight: 600; color: var(--espresso); }
@@ -288,10 +238,6 @@ img, svg {
 }
 .form-textarea:focus { outline: none; border-color: var(--gold); }
 
-
-/* ============================================================
-   AUTH PAGES (Login / Register)
-   ============================================================ */
 
 .auth-page {
   min-height: 100vh;
@@ -387,12 +333,6 @@ img, svg {
 }
 
 
-/* ============================================================
-   SHARED NAVBAR (components/layout/Navbar.tsx)
-   Used on the public landing page, and as the top bar for the
-   staff and admin portals.
-   ============================================================ */
-
 .navbar {
   position: sticky;
   top: 0;
@@ -423,9 +363,6 @@ img, svg {
   display: flex; align-items: center; justify-content: center;
   flex-shrink: 0;
   object-fit: cover;
-}
-.navbar-logo-mark--fallback {
-  /* Matches the <img>'s box so the onError swap is visually seamless */
 }
 .navbar-logo-name {
   font-family: var(--font-display);
@@ -475,9 +412,7 @@ img, svg {
   gap: var(--space-4);
   margin-left: auto;
 }
-/* Groups the signed-in identity + sign-out control as one visual unit —
-   close together (small internal gap), but set apart from the nav links
-   by a left divider rather than floating loose at the far edge. */
+
 .navbar-session {
   display: flex;
   align-items: center;
@@ -557,9 +492,6 @@ img, svg {
 }
 
 
-/* ============================================================
-   ADMIN LAYOUT
-   ============================================================ */
 
 .admin-root {
   display: grid;
@@ -567,8 +499,6 @@ img, svg {
   min-height: calc(100vh - var(--navbar-height));
   transition: grid-template-columns 0.18s ease;
 }
-/* AdminLayout no longer renders a top Navbar (it duplicated the sidebar's
-   own links) — the sidebar is full height on its own. */
 .admin-root--full { min-height: 100vh; }
 
 .admin-sidebar {
@@ -675,9 +605,7 @@ img, svg {
 
 .notif-wrap { position: relative; }
 
-/* Header-level sign out — mirrors .sidebar-logout's hover behaviour, but
-   reachable next to the theme toggle/notifications instead of only at the
-   bottom of a full-height sidebar (a real mouse trip on a tall screen). */
+
 .admin-header-logout {
   display: flex;
   align-items: center;
@@ -792,17 +720,10 @@ img, svg {
   display: none;
 }
 
-/* ── ADMIN — MOBILE ──────────────────────────────────────────
-   Below 860px (matches the navbar's own breakpoint) the sidebar can no
-   longer live as a permanent 220px grid column — on a ~375px phone
-   screen that's more than half the viewport gone before any real content
-   renders. It becomes an off-canvas drawer instead: hidden by default,
-   full width when open, triggered by the header hamburger, matching the
-   same interaction pattern the public/staff Navbar already uses
-   (.navbar-hamburger / .navbar-drawer) rather than inventing a new one. */
+
 @media (max-width: 860px) {
   .admin-root {
-    grid-template-columns: 1fr; /* sidebar no longer takes a column at all */
+    grid-template-columns: 1fr;
   }
 
   .admin-sidebar {
@@ -849,8 +770,7 @@ img, svg {
 
   .admin-header-hamburger { display: inline-flex; }
 
-  /* "Sign out" text label is redundant next to the icon at this width,
-     and competes for space with the hamburger + theme toggle + bell. */
+ 
   .admin-header-logout span { display: none; }
   .admin-header-logout { padding: var(--space-2); }
 
@@ -1642,8 +1562,24 @@ img, svg {
 .slot-cal__day--today { font-weight: 700; color: var(--gold-muted); }
 .slot-cal__day--closed,
 .slot-cal__day--full {
-  color: var(--border-strong);
   position: relative;
+  font-weight: 600;
+}
+/* A 4px dot alone was easy to miss, especially on the small circular
+   cells this calendar uses on mobile — the fill on the whole cell is
+   the primary signal now; the dot (kept below) is reinforcement for
+   people who've learned to associate it with the legend, not the only
+   cue carrying the meaning. */
+.slot-cal__day--closed {
+  background: var(--cream-mid);
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+  text-decoration-color: var(--border-strong);
+}
+.slot-cal__day--full {
+  background: color-mix(in srgb, var(--gold-muted) 24%, transparent);
+  color: var(--espresso-soft);
 }
 .slot-cal__day--closed::after,
 .slot-cal__day--full::after {

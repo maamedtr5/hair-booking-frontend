@@ -40,10 +40,31 @@ apiClient.interceptors.request.use(
 
 // ─── Response Interceptor ───────────────────────────────────────────────
 
+// Requests where a 401 is an *expected, already-handled* outcome, not a
+// "your session just died" signal:
+//  - /auth/login, /auth/register, /auth/verify-otp, /auth/resend-otp: a
+//    401 here just means bad credentials/code — LoginPage already shows
+//    that inline via getErrorMessage(). Broadcasting it as a global
+//    "unauthorized" event too would fire logout() on every wrong-password
+//    attempt, which itself calls /auth/logout — see next point.
+//  - /auth/logout: a 401 here means "you were already logged out",
+//    firing the same event again and re-triggering another logout call —
+//    an infinite loop. (The backend route is now idempotent too; this is
+//    belt-and-suspenders.)
+//  - /users/me: the mount-time "am I logged in" probe. A 401 there is a
+//    normal answer for a guest, not an expired session — AuthContext
+//    already handles that locally, no need to broadcast it.
+const SUPPRESS_UNAUTHORIZED_EVENT_PATHS = ["/auth/", "/users/me"];
+
+function shouldSuppressUnauthorizedEvent(url?: string): boolean {
+  if (!url) return false;
+  return SUPPRESS_UNAUTHORIZED_EVENT_PATHS.some((path) => url.includes(path));
+}
+
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => response,
   (error: AxiosError) => {
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !shouldSuppressUnauthorizedEvent(error.config?.url)) {
       // No token/user to clear from localStorage anymore — the cookie is
       // cleared server-side on logout/expiry. This just tells the app
       // "you're signed out now" so it can reset UI state.
