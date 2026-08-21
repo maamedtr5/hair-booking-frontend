@@ -8,6 +8,7 @@ import { useClientByUserId, useUpdateClient } from '../../hooks/useClients';
 import { useUIStore } from '../../store/uiStore';
 import { IntakeForm } from '../../components/forms/IntakeForm';
 import { Spinner } from '../../components/ui/Spinner';
+import { getErrorMessage } from '../../utils/apiClient';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 const profileSchema = z.object({
@@ -112,7 +113,7 @@ export default function ClientProfile() {
       addToast({ type: 'success', message: 'Password changed successfully.' });
       resetPassword();
     } catch (err: unknown) {
-      addToast({ type: 'error', message: (err as Error)?.message ?? 'Password change failed.' });
+      addToast({ type: 'error', message: getErrorMessage(err) });
     }
   }
 

@@ -21,6 +21,25 @@ export function formatAmount(amount: number): string {
 }
 
 /**
+ * Deposit-at-booking-time amount for a given full price under the salon's
+ * payment policy. Mirrors computeDepositAmount in the backend
+ * (src/utils/paymentPolicyCore.js) exactly — same rounding, same FIXED cap
+ * — since this runs client-side only to *display* the figure on the
+ * landing page; resolveBookingAmount() on the server remains the
+ * authoritative charge calculation and is never trusted from the client.
+ */
+export function computeDepositAmount(
+  fullPrice: number,
+  policy: { requireDeposit: boolean; depositType: 'PERCENTAGE' | 'FIXED'; depositAmount: number },
+): number {
+  if (!policy.requireDeposit) return 0;
+  if (policy.depositType === 'PERCENTAGE') {
+    return Math.round(((fullPrice * policy.depositAmount) / 100) * 100) / 100;
+  }
+  return Math.min(policy.depositAmount, fullPrice);
+}
+
+/**
  * Apply a promo code discount and return the discounted price.
  * @param price - original price in GHS
  * @param discount - discount value (percentage 0–100, or fixed GHS amount)
