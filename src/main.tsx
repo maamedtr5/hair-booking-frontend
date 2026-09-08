@@ -31,6 +31,7 @@ import { LandingPage } from "./pages/LandingPage";
 import UnauthorizedPage from "./pages/Unauthorizedpage";
 
 
+
 const BookingPage = lazy(() =>
   import("./pages/client/BookingPage").then((m) => ({ default: m.BookingPage }))
 );
@@ -196,3 +197,4 @@ ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
     </ErrorBoundary>
   </React.StrictMode>
 );
+
