@@ -7,6 +7,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { OtpRequiredError } from '../../store/errors.ts';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { PasswordToggleButton } from '../../components/ui/PasswordToggleButton';
 import { getErrorMessage } from '../../utils/apiClient';
 import { toast } from '../../store/uiStore';
 import type { Role } from '../../types/models';
@@ -220,14 +221,7 @@ export function LoginPage() {
                 placeholder="••••••••"
                 error={errors.password?.message}
                 rightIcon={
-                  <button
-                    type="button"
-                    className="password-toggle"
-                    onClick={() => setShowPassword((p) => !p)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
-                  >
-                    {showPassword ? '👁' : '👁‍🗨'}
-                  </button>
+                  <PasswordToggleButton shown={showPassword} onToggle={() => setShowPassword((p) => !p)} />
                 }
                 {...register('password')}
               />

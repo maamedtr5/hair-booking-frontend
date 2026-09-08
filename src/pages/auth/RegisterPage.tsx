@@ -6,6 +6,7 @@ import { registerSchema, type RegisterFormValues } from '../../validators/authVa
 import { useAuth } from '../../hooks/useAuth';
 import { Input } from '../../components/ui/Input';
 import { Button } from '../../components/ui/Button';
+import { PasswordToggleButton } from '../../components/ui/PasswordToggleButton';
 import { getErrorMessage } from '../../utils/apiClient';
 import type { Role } from '../../types/models';
 
@@ -28,19 +29,6 @@ function resolveRedirect(role: Role, from?: string): string {
   const allowed = ROLE_ALLOWED_PREFIXES[role] ?? [];
   const isAllowed = allowed.some((p) => from === p || from.startsWith(`${p}/`));
   return isAllowed ? from : home;
-}
-
-function PasswordToggleButton({ shown, onToggle }: { shown: boolean; onToggle: () => void }) {
-  return (
-    <button
-      type="button"
-      className="password-toggle"
-      onClick={onToggle}
-      aria-label={shown ? 'Hide password' : 'Show password'}
-    >
-      {shown ? '👁' : '👁‍🗨'}
-    </button>
-  );
 }
 
 export function RegisterPage() {
