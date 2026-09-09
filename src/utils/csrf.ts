@@ -1,13 +1,33 @@
-// src/utils/csrf.ts
-//
-// The CSRF cookie is deliberately NOT httpOnly (see the backend's
-// authCookies.js for why) — reading it here and echoing it back as a
-// header is exactly the "double submit" half of the CSRF defense. This
-// is the one piece of auth state that's still fine to read from
-// document.cookie: unlike the session JWT, this value on its own can't
-// be used to authenticate as anyone — it only matters paired with the
-// session cookie the browser already controls sending.
+const CSRF_STORAGE_KEY = 'csrf_token';
+
+let csrfToken: string | null = null;
+
+export function setCsrfToken(token: string | null): void {
+  csrfToken = token;
+
+  if (token) {
+    sessionStorage.setItem(CSRF_STORAGE_KEY, token);
+  } else {
+    sessionStorage.removeItem(CSRF_STORAGE_KEY);
+  }
+}
+
 export function getCsrfToken(): string | null {
-  const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/);
-  return match ? decodeURIComponent(match[1]) : null;
+  if (csrfToken) {
+    return csrfToken;
+  }
+
+  const storedToken = sessionStorage.getItem(CSRF_STORAGE_KEY);
+
+  if (storedToken) {
+    csrfToken = storedToken;
+    return storedToken;
+  }
+
+  return null;
+}
+
+export function clearCsrfToken(): void {
+  csrfToken = null;
+  sessionStorage.removeItem(CSRF_STORAGE_KEY);
 }

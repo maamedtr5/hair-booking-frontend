@@ -20,7 +20,7 @@ import * as usersApi from "../api/users";
 import { loadCachedUser, cacheUser, clearCachedUser } from "../utils/authStorage";
 import type { AuthUser, LoginPayload, RegisterPayload } from "../types/models";
 import { OtpRequiredError } from "../store/errors";
-
+import { setCsrfToken, clearCsrfToken } from "../utils/csrf";
 interface AuthContextValue {
   user: AuthUser | null;
   isAuthenticated: boolean;
@@ -63,11 +63,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // with the auth:unauthorized listener below it created a loop: no
     // session -> /auth/logout 401s -> event fires again -> logout() runs
     // again -> another /auth/logout call -> ad infinitum.
-    if (userRef.current) {
-      logoutRequest();
-    }
-    clearCachedUser();
-    setUser(null);
+     if (userRef.current) {
+  logoutRequest();
+}
+
+clearCsrfToken();
+clearCachedUser();
+setUser(null);
   }, []);
   const logoutAllDevices = useCallback(async () => {
     await logoutAllRequest();
@@ -119,21 +121,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const response = await apiLogin(payload);
-        if (isOtpRequired(response)) {
-          // Not a failure — deliberately thrown so LoginPage's existing
-          // try/catch is enough to route to the OTP step without every
-          // other login() caller needing to learn a new return shape.
-          throw new OtpRequiredError(response.otpToken, response.message);
-        }
-        // The session cookie is already set by the server at this point
-        // (login's response Set-Cookie header) — this call just fetches
-        // the full profile to show in the UI, it isn't what establishes
-        // the session.
-        const authUser = response.user
-          ? { ...response.user, ...(await usersApi.getMe()) }
-          : await usersApi.getMe();
-        persist(authUser);
-        return authUser;
+
+if (isOtpRequired(response)) {
+  throw new OtpRequiredError(response.otpToken, response.message);
+}
+
+setCsrfToken(response.csrfToken);
+
+const authUser = response.user
+  ? { ...response.user, ...(await usersApi.getMe()) }
+  : await usersApi.getMe();
+
+persist(authUser);
+return authUser;
       } finally {
         setIsLoading(false);
       }
@@ -146,11 +146,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       try {
         const response = await apiVerifyOtp(otpToken, code);
-        const authUser = response.user
-          ? { ...response.user, ...(await usersApi.getMe()) }
-          : await usersApi.getMe();
-        persist(authUser);
-        return authUser;
+
+setCsrfToken(response.csrfToken);
+
+const authUser = response.user
+  ? { ...response.user, ...(await usersApi.getMe()) }
+  : await usersApi.getMe();
+
+persist(authUser);
+return authUser;
       } finally {
         setIsLoading(false);
       }
@@ -167,12 +171,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     async (payload: RegisterPayload): Promise<AuthUser> => {
       setIsLoading(true);
       try {
-        const response = await apiRegister(payload);
-        const authUser = response.user
-          ? { ...response.user, ...(await usersApi.getMe()) }
-          : await usersApi.getMe();
-        persist(authUser);
-        return authUser;
+      const response = await apiRegister(payload);
+
+setCsrfToken(response.csrfToken);
+
+const authUser = response.user
+  ? { ...response.user, ...(await usersApi.getMe()) }
+  : await usersApi.getMe();
+
+persist(authUser);
+return authUser;
       } finally {
         setIsLoading(false);
       }
