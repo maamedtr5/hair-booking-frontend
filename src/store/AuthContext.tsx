@@ -128,9 +128,20 @@ if (isOtpRequired(response)) {
 
 setCsrfToken(response.csrfToken);
 
-const authUser = response.user
-  ? { ...response.user, ...(await usersApi.getMe()) }
-  : await usersApi.getMe();
+// Trust the login response's user object directly instead of
+// immediately firing a follow-up GET /users/me. That extra request
+// raced the browser's application of the cross-site Set-Cookie header
+// from the login response — on a slower device/network (or a browser
+// applying stricter cross-site cookie handling than the one this was
+// tested on) the cookie isn't guaranteed to be attached yet, so the
+// follow-up request can 401 even though login itself just succeeded.
+// The backend already returns the full sanitized user (including
+// staff/client/admin relations) on login/register/verifyOtp, so there
+// is nothing this second call adds.
+if (!response.user) {
+  throw new Error('Login succeeded but no user was returned.');
+}
+const authUser = response.user;
 
 persist(authUser);
 return authUser;
@@ -149,9 +160,11 @@ return authUser;
 
 setCsrfToken(response.csrfToken);
 
-const authUser = response.user
-  ? { ...response.user, ...(await usersApi.getMe()) }
-  : await usersApi.getMe();
+// Same reasoning as login() above — trust the response, don't race it.
+if (!response.user) {
+  throw new Error('Verification succeeded but no user was returned.');
+}
+const authUser = response.user;
 
 persist(authUser);
 return authUser;
@@ -175,9 +188,11 @@ return authUser;
 
 setCsrfToken(response.csrfToken);
 
-const authUser = response.user
-  ? { ...response.user, ...(await usersApi.getMe()) }
-  : await usersApi.getMe();
+// Same reasoning as login() above — trust the response, don't race it.
+if (!response.user) {
+  throw new Error('Registration succeeded but no user was returned.');
+}
+const authUser = response.user;
 
 persist(authUser);
 return authUser;
