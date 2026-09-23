@@ -1,9 +1,9 @@
 import { useState, useMemo } from 'react';
-import { useServices } from '../../hooks/useServices';
+import { useServiceCategories } from '../../hooks/useServiceCategories';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
 import { Spinner } from '../ui/Spinner';
 import type { Service } from '../../types';
- 
+
 
 function formatPrice(price: number): string {
   return new Intl.NumberFormat('en-GH', {
@@ -22,11 +22,12 @@ function formatDuration(minutes: number): string {
 
 interface ServiceCardProps {
   service: Service;
+  categoryName?: string;
   selected: boolean;
   onSelect: (service: Service) => void;
 }
 
-function ServiceCard({ service, selected, onSelect }: ServiceCardProps) {
+function ServiceCard({ service, categoryName, selected, onSelect }: ServiceCardProps) {
   return (
     <button
       type="button"
@@ -37,6 +38,8 @@ function ServiceCard({ service, selected, onSelect }: ServiceCardProps) {
       <div className="service-card__header">
         <span className="service-card__name">{service.name}</span>
       </div>
+
+      {categoryName && <span className="cat-badge" style={{ marginBottom: 8 }}>{categoryName}</span>}
 
       {service.description && (
         <p className="service-card__description">{service.description}</p>
@@ -65,19 +68,43 @@ function ServiceCard({ service, selected, onSelect }: ServiceCardProps) {
 }
 
 export function ServiceSelector() {
-  const { data: services, isLoading, isError } = useServices();
+  const { data: categories, isLoading, isError } = useServiceCategories();
   const { selectedService, setService } = useBookingFlowStore();
   const [search, setSearch] = useState('');
+  const [activeCategoryId, setActiveCategoryId] = useState<number | null>(null);
 
-  const filtered = useMemo(() => {
-    if (!services) return [];
-    if (!search) return services;
-    const q = search.toLowerCase();
-    return services.filter((s) =>
-      s.name.toLowerCase().includes(q) ||
-      s.description?.toLowerCase().includes(q),
+  // Categories the client can actually book from right now: active, with
+  // at least one active service in them.
+  const bookableCategories = useMemo(
+    () => (categories ?? []).filter((c) => (c.services ?? []).length > 0),
+    [categories],
+  );
+
+  // Default to the first category (or the one the currently-selected
+  // service belongs to) once categories load. Computed during render
+  // (React's documented pattern for state derived from other state)
+  // rather than in an effect — it only fires once, since activeCategoryId
+  // is non-null on every render after this one.
+  if (activeCategoryId === null && bookableCategories.length > 0) {
+    const preferred = selectedService
+      ? bookableCategories.find((c) => c.id === selectedService.categoryId)
+      : undefined;
+    setActiveCategoryId((preferred ?? bookableCategories[0]).id);
+  }
+
+  const isSearching = search.trim().length > 0;
+
+  const searchResults = useMemo(() => {
+    if (!isSearching) return [];
+    const q = search.trim().toLowerCase();
+    return bookableCategories.flatMap((cat) =>
+      (cat.services ?? [])
+        .filter((s) => s.name.toLowerCase().includes(q) || s.description?.toLowerCase().includes(q))
+        .map((s) => ({ service: s, categoryName: cat.name })),
     );
-  }, [services, search]);
+  }, [bookableCategories, search, isSearching]);
+
+  const activeCategory = bookableCategories.find((c) => c.id === activeCategoryId);
 
   if (isLoading) {
     return (
@@ -115,20 +142,55 @@ export function ServiceSelector() {
         </div>
       </div>
 
-      {filtered.length === 0 ? (
+      {!isSearching && bookableCategories.length > 1 && (
+        <div className="service-selector__tabs" role="tablist" aria-label="Service categories">
+          {bookableCategories.map((cat) => (
+            <button
+              key={cat.id}
+              type="button"
+              role="tab"
+              aria-selected={cat.id === activeCategoryId}
+              onClick={() => setActiveCategoryId(cat.id)}
+              className={`service-selector__tab ${cat.id === activeCategoryId ? 'service-selector__tab--active' : ''}`}
+            >
+              {cat.name}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!isSearching && activeCategory?.description && (
+        <p className="service-selector__category-desc">{activeCategory.description}</p>
+      )}
+
+      {isSearching ? (
+        searchResults.length === 0 ? (
+          <div className="service-selector__empty">
+            <p>No services match your search.</p>
+            <button type="button" onClick={() => setSearch('')} className="btn btn--ghost btn--sm">
+              Clear search
+            </button>
+          </div>
+        ) : (
+          <div className="service-selector__grid" role="listbox" aria-label="Select a service">
+            {searchResults.map(({ service, categoryName }) => (
+              <ServiceCard
+                key={service.id}
+                service={service}
+                categoryName={categoryName}
+                selected={selectedService?.id === service.id}
+                onSelect={setService}
+              />
+            ))}
+          </div>
+        )
+      ) : bookableCategories.length === 0 ? (
         <div className="service-selector__empty">
-          <p>No services match your search.</p>
-          <button
-            type="button"
-            onClick={() => setSearch('')}
-            className="btn btn--ghost btn--sm"
-          >
-            Clear search
-          </button>
+          <p>No services are available for booking right now.</p>
         </div>
       ) : (
         <div className="service-selector__grid" role="listbox" aria-label="Select a service">
-          {filtered.map((service) => (
+          {(activeCategory?.services ?? []).map((service) => (
             <ServiceCard
               key={service.id}
               service={service}

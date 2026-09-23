@@ -16,6 +16,7 @@ import {
   Tag,
   Menu,
   X,
+  FileText,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotifications, useUnreadCount } from '../../hooks/useNotifications';
@@ -28,6 +29,7 @@ const NAV = [
   { to: '/dashboard/appointments', label: 'Appointments', icon: ClipboardList, end: false },
   { to: '/dashboard/clients', label: 'Clients', icon: UserCircle, end: false },
   { to: '/dashboard/services', label: 'Services', icon: Scissors, end: false },
+  { to: '/dashboard/forms', label: 'Consultation Forms', icon: FileText, end: false },
   { to: '/dashboard/promocodes', label: 'Promo codes', icon: Tag, end: false },
   { to: '/dashboard/staff', label: 'Staff', icon: Users, end: false },
   { to: '/dashboard/reports', label: 'Reports', icon: BarChart2, end: false },

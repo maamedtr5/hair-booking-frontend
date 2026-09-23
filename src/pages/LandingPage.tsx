@@ -58,7 +58,7 @@ export function LandingPage() {
       <section className="landing-services container">
         <div className="landing-services__header">
           <div>
-            <p className="landing-services__eyebrow">Popular services</p>
+            <p className="landing-services__eyebrow">Services</p>
           </div>
           <Link to="/book" className="landing-services__link">View all →</Link>
         </div>

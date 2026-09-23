@@ -58,6 +58,8 @@ const Settings = lazy(() =>
 );
 const ClientsPage = lazy(() => import("./pages/admin/ClientPage"));
 const ServicesPage = lazy(() => import("./pages/admin/ServicePage"));
+const FormsPage = lazy(() => import("./pages/admin/FormsPage"));
+const FormBuilderPage = lazy(() => import("./pages/admin/FormBuilderPage"));
 const PromocodesPage = lazy(() => import("./pages/admin/Promocodes"));
 const AdminAppointments = lazy(() => import("./pages/admin/AdminAppointments"));
 const NotificationsPage = lazy(() => import("./pages/admin/Notification"));
@@ -153,6 +155,8 @@ const router = createBrowserRouter([
               { path: "/dashboard/settings",  element: withSuspense(<Settings />) },
               { path: "/dashboard/clients",      element: withSuspense(<ClientsPage />) },
               { path: "/dashboard/services",     element: withSuspense(<ServicesPage />) },
+              { path: "/dashboard/forms",         element: withSuspense(<FormsPage />) },
+              { path: "/dashboard/forms/:id",     element: withSuspense(<FormBuilderPage />) },
               { path: "/dashboard/promocodes",   element: withSuspense(<PromocodesPage />) },
               { path: "/dashboard/appointments", element: withSuspense(<AdminAppointments />) },
               { path: "/dashboard/notifications", element: withSuspense(<NotificationsPage />) },

@@ -96,15 +96,66 @@ export interface Staff {
   reviews?: Review[];
 }
 
+export interface ServiceCategory {
+  id: number;
+  name: string;
+  slug: string;
+  description?: string | null;
+  displayOrder: number;
+  isActive: boolean;
+  formTemplateId?: number | null;
+  createdAt: string;
+  updatedAt: string;
+  formTemplate?: FormTemplate | null;
+  services?: Service[];
+}
+
+export type FormFieldType =
+  | 'TEXT'
+  | 'TEXTAREA'
+  | 'SINGLE_SELECT'
+  | 'MULTI_SELECT'
+  | 'SCALE'
+  | 'DATE'
+  | 'CHECKBOX'
+  | 'SIGNATURE';
+
+export interface FormField {
+  id: number;
+  formTemplateId: number;
+  section?: string | null;
+  label: string;
+  helpText?: string | null;
+  fieldType: FormFieldType;
+  options?: string[] | null;
+  required: boolean;
+  order: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FormTemplate {
+  id: number;
+  name: string;
+  description?: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  fields?: FormField[];
+}
+
 export interface Service {
   id: number;
+  categoryId: number;
   name: string;
   description?: string | null;
   duration: number;
   price: number;
   isActive: boolean;
+  displayOrder: number;
   createdAt: string;
   updatedAt: string;
+  category?: ServiceCategory;
 }
 
 export interface Appointment {
@@ -201,7 +252,11 @@ export interface Form {
   clientId: number;
   bookingId?: number | null;
   title: string;
+  // For a consultation-form submission (formTemplateId set), keyed by
+  // FormField.id (as a string) -> the client's answer for that question.
   fields: Record<string, unknown>;
+  formTemplateId?: number | null;
+  formTemplate?: FormTemplate | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -378,6 +433,10 @@ export interface BookingFlowState {
   appliedPromocode: Promocode | null;
   notes: string;
   consentData: Record<string, boolean> | null;
+  // Answers to the selected service's category consultation form (if
+  // any), keyed by FormField.id as a string. Cleared whenever the
+  // selected service changes categories.
+  formAnswers: Record<string, unknown> | null;
 }
 
 export interface IntakeForm {
@@ -417,4 +476,9 @@ export interface CreateAppointmentPayload {
   // Validated server-side (exists, active, within date range) at booking
   // time — see resolvePromocodeId in appointmentController.js.
   promoCode?: string;
+  // Required (and validated against the live FormTemplate server-side)
+  // only when the selected service's category has an active
+  // formTemplate — keyed by FormField.id as a string. See
+  // validateAnswersAgainstTemplate in formAnswers.js.
+  formAnswers?: Record<string, unknown>;
 }

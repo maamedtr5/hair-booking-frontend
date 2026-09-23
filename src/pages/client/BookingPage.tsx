@@ -1,4 +1,4 @@
- import { useState } from 'react';
+ import { useState, useMemo } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useQueryClient } from '@tanstack/react-query';
 import { useBookingFlowStore } from '../../store/bookingFlowStore';
@@ -7,6 +7,7 @@ import { useCreateAppointment } from '../../hooks/useAppointments';
 import { useInitializePayment, useFetchPaymentQuote } from '../../hooks/usePayments';
 import { usePaymentPolicy } from '../../hooks/useSettings';
 import { useConsentForm } from '../../hooks/useConsentForm';
+import { useServiceCategories } from '../../hooks/useServiceCategories';
 import { useValidatePromoCode } from '../../hooks/usePromocdes';
 import { slotKeys } from '../../hooks/useSlots';
 import { ServiceSelector } from '../../components/booking/ServiceSelector';
@@ -14,6 +15,7 @@ import { StaffPicker } from '../../components/booking/StaffPicker';
 import { SlotCalender } from '../../components/booking/SlotCalender';
 import { CoilDivider } from '../../components/booking/CoilDivider';
 import { ConsentForm } from '../../components/forms/ConsentForm';
+import { DynamicConsultationForm } from '../../components/forms/DynamicConsultationForm';
 import { toast } from '../../store/uiStore';
 import { getErrorMessage, getErrorCode } from '../../utils/apiClient';
 import type { PaymentMethod } from '../../types/models';
@@ -42,9 +44,34 @@ export function BookingPage() {
     selectedService, selectedStaff, selectedSlot,
     notes, setNotes,
     consentData,
+    formAnswers,
     appliedPromocode, setPromocode,
     reset,
   } = useBookingFlowStore();
+
+  // The same category listing ServiceSelector already fetches (10 min
+  // cache) — reused here, not refetched, just to look up whether the
+  // chosen service's category requires a consultation form.
+  const { data: categories } = useServiceCategories();
+  const requiredTemplate = useMemo(() => {
+    if (!selectedService) return null;
+    const category = categories?.find((c) => c.id === selectedService.categoryId);
+    return category?.formTemplate && category.formTemplate.isActive ? category.formTemplate : null;
+  }, [categories, selectedService]);
+
+  // Step 3 shows Consent first, then — only when the selected service's
+  // category requires one — the consultation form. Reset whenever the
+  // person leaves step 3 so returning to it (e.g. via Back) starts from
+  // Consent again rather than skipping straight to a half-done form.
+  // Computed during render (React's pattern for resetting state in
+  // response to a prop/state change) rather than in an effect, so it
+  // fires exactly once per step transition instead of after a render.
+  const [consultationStepActive, setConsultationStepActive] = useState(false);
+  const [stepAtLastReset, setStepAtLastReset] = useState(step);
+  if (step !== stepAtLastReset) {
+    setStepAtLastReset(step);
+    if (step !== 3 && consultationStepActive) setConsultationStepActive(false);
+  }
 
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('MOBILE_MONEY');
   const [submitting, setSubmitting] = useState(false);
@@ -141,6 +168,11 @@ export function BookingPage() {
         date:      selectedSlot.startTime,
         notes:     notes || undefined,
         promoCode: appliedPromocode?.code,
+        // Validated server-side against the live consultation form
+        // definition — see validateAnswersAgainstTemplate in
+        // formAnswers.js. Sent unconditionally; the backend simply
+        // ignores it when the category has no required form.
+        formAnswers: formAnswers ?? undefined,
         ...(!isAuthenticated
           ? {
               guestName: guestName.trim(),
@@ -284,7 +316,9 @@ export function BookingPage() {
               className={`booking-step ${step === s.num ? 'booking-step--active' : ''} ${step > s.num ? 'booking-step--done' : ''}`}
             >
               <span className="booking-step__num">{step > s.num ? '✓' : s.num}</span>
-              <span className="booking-step__label">{s.label}</span>
+              <span className="booking-step__label">
+                {s.num === 3 && requiredTemplate ? 'Consent & Consultation' : s.label}
+              </span>
             </div>
             {i < STEPS.length - 1 && <CoilDivider done={step > s.num} />}
           </div>
@@ -304,7 +338,17 @@ export function BookingPage() {
         )}
 
         {step === 3 && (!isAuthenticated || clientId) && (
-          <ConsentForm clientId={clientId} onComplete={() => nextStep()} />
+          !consultationStepActive ? (
+            <ConsentForm
+              clientId={clientId}
+              onComplete={() => {
+                if (requiredTemplate) setConsultationStepActive(true);
+                else nextStep();
+              }}
+            />
+          ) : requiredTemplate ? (
+            <DynamicConsultationForm template={requiredTemplate} onComplete={() => nextStep()} />
+          ) : null
         )}
 
         {step === 3 && isAuthenticated && !clientId && (

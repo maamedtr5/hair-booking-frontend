@@ -19,6 +19,9 @@ interface BookingFlowStore extends BookingFlowState {
   // Consent form data
   setConsentData: (data: Record<string, boolean> | null) => void;
 
+  // Answers to the selected service's category consultation form (if any)
+  setFormAnswers: (data: Record<string, unknown> | null) => void;
+
   // Reset entire flow (after successful booking or on cancel)
   reset: () => void;
 }
@@ -32,6 +35,7 @@ const initialState: BookingFlowState = {
   appliedPromocode: null,
   notes: '',
   consentData: null, // ✅ new field
+  formAnswers: null,
 };
 
 export const useBookingFlowStore = create<BookingFlowStore>((set, get) => ({
@@ -50,13 +54,17 @@ export const useBookingFlowStore = create<BookingFlowStore>((set, get) => ({
   },
 
   setService: (service) =>
-    set({
+    set((state) => ({
       selectedService: service,
       // Clear downstream selections when service changes
       selectedStaff: null,
       selectedSlot: null,
       selectedDate: null,
-    }),
+      // A different service may belong to a different category (or none)
+      // with a different — or no — required consultation form, so any
+      // answers collected for the previous service no longer apply.
+      formAnswers: service?.categoryId === state.selectedService?.categoryId ? state.formAnswers : null,
+    })),
 
   setStaff: (staff) =>
     set({
@@ -79,6 +87,8 @@ export const useBookingFlowStore = create<BookingFlowStore>((set, get) => ({
   setNotes: (notes) => set({ notes }),
 
   setConsentData: (data) => set({ consentData: data }), // ✅ new setter
+
+  setFormAnswers: (data) => set({ formAnswers: data }),
 
   reset: () => set(initialState),
 }));

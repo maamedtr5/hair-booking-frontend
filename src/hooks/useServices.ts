@@ -31,6 +31,11 @@ export function useCreateService() {
     mutationFn: (payload: ServiceFormValues) => servicesApi.createService(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: serviceKeys.all });
+      // Categories embed their services (see useServiceCategories) — keep
+      // that cache in sync too, using the shared key prefix rather than
+      // importing useServiceCategories.ts directly to avoid a circular
+      // import between the two hook modules.
+      qc.invalidateQueries({ queryKey: ['serviceCategories'] });
       toast.success('Service created');
     },
     onError: (err) => toast.error(getErrorMessage(err)),
@@ -45,6 +50,7 @@ export function useUpdateService() {
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: serviceKeys.all });
       qc.invalidateQueries({ queryKey: serviceKeys.byId(id) });
+      qc.invalidateQueries({ queryKey: ['serviceCategories'] });
       toast.success('Service updated');
     },
     onError: (err) => toast.error(getErrorMessage(err)),
@@ -57,6 +63,7 @@ export function useDeleteService() {
     mutationFn: (id: number) => servicesApi.deleteService(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: serviceKeys.all });
+      qc.invalidateQueries({ queryKey: ['serviceCategories'] });
       toast.success('Service deleted');
     },
     onError: (err) => toast.error(getErrorMessage(err)),
