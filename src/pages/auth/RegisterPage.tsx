@@ -74,7 +74,7 @@ export function RegisterPage() {
           <div className="auth-hero-mark">L</div>
           <h1 className="auth-hero-title">Locs Allure</h1>
           <p className="auth-hero-sub">
-            Premium hair salon in the heart of Madina Estates, Accra.
+            Premium hair salon in the heart of Pantang, Accra.
             Book, manage, and experience luxury hair care.
           </p>
           <p className="auth-hero-quote">

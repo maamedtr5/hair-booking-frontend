@@ -305,6 +305,18 @@ export default function ServicesPage() {
 
   const totalServices = (categories ?? []).reduce((sum, c) => sum + (c.services?.length ?? 0), 0);
 
+  // Services still sitting in the catch-all "Other Services" bucket (where
+  // every pre-existing service landed when categories were introduced)
+  // don't get their own tab on the client booking page — the category
+  // selector only shows tabs once there's more than one category with
+  // services in it. Surface this here so it's obvious in the admin, not
+  // just something you notice missing on the client site.
+  const otherServicesCategory = (categories ?? []).find(
+    (c) => c.name.trim().toLowerCase() === 'other services'
+  );
+  const uncategorizedCount = otherServicesCategory?.services?.length ?? 0;
+  const bookableCategoryCount = (categories ?? []).filter((c) => (c.services?.length ?? 0) > 0).length;
+
   return (
     <div className="svc-page">
       <div className="svc-page__header">
@@ -324,6 +336,14 @@ export default function ServicesPage() {
           </button>
         </div>
       </div>
+
+      {!isLoading && uncategorizedCount > 0 && bookableCategoryCount <= 1 && (
+        <div className="svc-page__banner svc-page__banner--warn" role="status">
+          <strong>{uncategorizedCount}</strong> service{uncategorizedCount !== 1 ? 's' : ''} still in{' '}
+          <strong>Other Services</strong>. Clients won't see category tabs on the booking page until
+          services are spread across more than one category — move these into the right category below.
+        </div>
+      )}
 
       {isLoading ? (
         <div className="svc-page__state"><Spinner size="lg" /></div>

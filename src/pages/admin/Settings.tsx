@@ -210,7 +210,7 @@ function SalonLocationSection() {
 
       <Input
         label="Address"
-        placeholder="e.g. Madina Estates, near the Magistrate Court, Accra"
+        placeholder="e.g. Pantang, near Pantang Hospital, Accra"
         value={working.address}
         onChange={(e) => setDraft({ ...working, address: e.target.value })}
       />

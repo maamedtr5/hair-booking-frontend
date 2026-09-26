@@ -29,7 +29,7 @@ export function LandingPage() {
 
       <section className="landing-hero">
         <div className="landing-hero__content">
-          <span className="landing-hero__eyebrow">Madina Estates, Accra</span>
+          <span className="landing-hero__eyebrow">Pantang, Accra</span>
           <h1 className="landing-hero__title">
             Beautiful locs, braids &amp; natural hair. Crafted with care
           </h1>
@@ -98,7 +98,7 @@ export function LandingPage() {
       <GettingHere />
 
       <footer className="landing-footer">
-        <p>Locs Allure — Madina Estates, Accra, Ghana © {new Date().getFullYear()}</p>
+        <p>Locs Allure — Pantang, Accra, Ghana © {new Date().getFullYear()}</p>
       </footer>
     </div>
   );

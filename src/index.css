@@ -2107,6 +2107,18 @@ img, svg {
 .svc-page__title { font-family: var(--font-display); font-weight: 600; font-size: var(--text-2xl); color: var(--espresso); }
 .svc-page__sub { color: var(--text-muted); font-size: var(--text-sm); margin-top: var(--space-1); }
 .svc-page__state { display: flex; justify-content: center; padding: var(--space-12) 0; }
+.svc-page__banner {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md, 8px);
+  margin-bottom: var(--space-4);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+.svc-page__banner--warn {
+  background: color-mix(in srgb, var(--color-amber) 14%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-amber) 40%, transparent);
+  color: var(--color-amber);
+}
 .svc-page__table-wrap { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow-x: auto; overflow-y: hidden; }
 
 .svc-table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); }
